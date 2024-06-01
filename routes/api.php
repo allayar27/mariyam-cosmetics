@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('branch/delete/{branch}', [BranchController::class, 'delete']);
         //position
         Route::post('position/add', [PositionController::class, 'add']);
+        Route::put('position/update/{position}', [PositionController::class, 'update']);
         //user
         Route::post('user/add', [UserController::class, 'add']);
         Route::get('users/images', [UserController::class, 'all']);

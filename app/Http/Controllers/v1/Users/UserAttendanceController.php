@@ -38,7 +38,6 @@ class UserAttendanceController extends Controller
         $usersQuery = $id ? Branch::findOrFail($id)->users() : User::query();
         $users = $usersQuery->paginate($perPage);
         $collection = [
-            'lastPage' => $users->lastPage(),
             'users' => []
         ];
         foreach ($users as $user) {
@@ -46,7 +45,8 @@ class UserAttendanceController extends Controller
         }
         return response()->json([
             'success' => true,
-            'data' => $collection
+            'total' => $users->count(),
+            'data' => $collection['users'],
         ]);
     }
 
@@ -63,7 +63,7 @@ class UserAttendanceController extends Controller
                 $query->where('branch_id', $id);
             });
         }
-        $attendances = $attendancesQuery->whereDate('created_at', $day)->where('type', 'in')->get();
+        $attendances = $attendancesQuery->whereDate('day', $day)->where('type', 'in')->get();
         $allComersCount = $attendances->count();
         $lateComersCount = $attendances->filter(function ($attendance) {
             return $attendance->user->schedule->time_in->gt($attendance->time);
@@ -83,7 +83,6 @@ class UserAttendanceController extends Controller
         $day = request('day') ?? Carbon::today();
         $attendances = Attendance::whereDate('created_at', $day)->latest()->paginate(request('per_page', 10));
         $collection = [
-            'lastPage' => $attendances->lastPage(),
             'attendances' => []
         ];
         foreach ($attendances as $attendance) {
@@ -91,7 +90,8 @@ class UserAttendanceController extends Controller
         }
         return response()->json([
             'success' => true,
-            'data' => $collection
+            'total' => $attendances->count(),
+            'data' => $collection['attendances'],
         ]);
     }
 
@@ -260,13 +260,11 @@ class UserAttendanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'current_page' => $paginatedLatecomers->currentPage(),
-                'last_page' => $paginatedLatecomers->lastPage(),
-                'per_page' => $perPage,
-                'total' => $paginatedLatecomers->total(),
-                'late_comers' => $paginatedLatecomers->items(),
-            ],
+            'current_page' => $paginatedLatecomers->currentPage(),
+            'last_page' => $paginatedLatecomers->lastPage(),
+            'per_page' => $perPage,
+            'total' => $paginatedLatecomers->total(),
+            'data' => $paginatedLatecomers->items(),
         ]);
     }
 
@@ -292,13 +290,11 @@ class UserAttendanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'current_page' => $paginatedAbsentUsers->currentPage(),
-                'last_page' => $paginatedAbsentUsers->lastPage(),
-                'per_page' => $perPage,
-                'total' => $paginatedAbsentUsers->total(),
-                'absent_users' => UserControlResource::collection($paginatedAbsentUsers->items()),
-            ],
+            'current_page' => $paginatedAbsentUsers->currentPage(),
+            'last_page' => $paginatedAbsentUsers->lastPage(),
+            'per_page' => $perPage,
+            'total' => $paginatedAbsentUsers->total(),
+            'data' => UserControlResource::collection($paginatedAbsentUsers->items())
         ]);
     }
 
@@ -344,7 +340,7 @@ class UserAttendanceController extends Controller
             $collection['branches'][] = [
                 'branch_id' => $branch->id,
                 'branch_name' => $branch->name,
-                'on_time_percentage' => $onTimePercentage,
+                'al_comers' => $onTimePercentage,
                 'late_percentage' => $latePercentage
             ];
         }

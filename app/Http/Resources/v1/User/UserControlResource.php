@@ -19,6 +19,7 @@ class UserControlResource extends JsonResource
             'name' => $this->name,
             'position' => $this->position->name,
             'branch' => $this->branch->name,
+            'phone' => $this->phone,
             'schedule' => [
                 'time_in' => $this->schedule->time_in->format('h:i:s'),
                 'time_out' => $this->schedule->time_out->format('h:i:s'),

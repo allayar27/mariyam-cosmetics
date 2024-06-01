@@ -31,6 +31,14 @@ class PositionController extends Controller
             ]);
         }
     }
+    public function delete(Position $position){
+        if($position){
+            $position->delete();
+            return response()->json([
+               'success' => true,
+            ]);
+        }
+    }
 
     public function all_positions(){
         $positions = Position::latest()->get();

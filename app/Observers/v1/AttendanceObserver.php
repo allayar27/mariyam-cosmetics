@@ -17,9 +17,8 @@ class AttendanceObserver
     }
     public function created(Attendance $attendance)
     {
-        $this->updateWorkDay($attendance);
         $this->updateAttendanceTypes($attendance);
-        // $this->updateLateWorkers($attendance,User::find($attendance->user_id));
+        
     }
     protected function updateAttendanceTypes(Attendance $attendance)
     {
@@ -33,8 +32,7 @@ class AttendanceObserver
             return;
         }
         $firstAttendance = $todayAttendances->first();
-        $firstAttendance->update(['type' => 'in']);
-        
+        $firstAttendance->update(['type' => 'in']); 
         if ($todayAttendances->count() > 1) {
             $lastAttendance = $todayAttendances->last();
             $lastAttendance->update(['type' => 'out']);
@@ -42,6 +40,7 @@ class AttendanceObserver
                 $attendance->update(['type' => 'none']);
             }
         }
+        $this->updateWorkDay($attendance);
     }
 
     protected function updateLateWorkers(Attendance $attendance, $user)
@@ -73,7 +72,16 @@ class AttendanceObserver
             'total_workers' => $user->branch->users()->count(),
         ]);
         $workDay->update([
-            'workers_count' => Attendance::where('type', 'in')->whereDate('day',Carbon::today())->where('branch_id', $user->branch_id)->count()
+            'workers_count' => Attendance::where('type', 'in')->whereDate('day',Carbon::today())->where('branch_id', $user->branch_id)->count(),
+            'late_workers' => Attendance::whereDate('created_at', Carbon::today())
+            ->where('type', 'in')
+            ->whereHas('user', function($query)  use ($user){
+                $query->where('branch_id', $user->branch_id);
+            })
+            ->whereHas('user.schedule', function($scheduleQuery) {
+                $scheduleQuery->whereColumn('attendances.time', '>', 'schedules.time_in');
+            })
+            ->count(),
         ]);
         $this->checkWorkDayType($workDay);
     }
@@ -91,7 +99,5 @@ class AttendanceObserver
         }
     }
 
-    public function updated(Attendance $attendance){
-        $this->updateLateWorkers($attendance,User::find($attendance->user_id));
-    }
+    
 }
