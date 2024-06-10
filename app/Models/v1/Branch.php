@@ -14,18 +14,11 @@ class Branch extends Model
         'location',
     ];
 
-    protected $casts = [
-        'created_at' => 'datetime:d/m/Y h:i:s', 
-        'updated_at' => 'datetime:d/m/Y h:i:s',
-    ];
+  
 
     public function  users(){
         return $this->hasMany(User::class);
     }
-
-    // public function  attendances(){
-    //     return $this->hasMany(Attendance::class);
-    // }
      public function  work_days(){
         return $this->hasMany(Work_Days::class);
     }

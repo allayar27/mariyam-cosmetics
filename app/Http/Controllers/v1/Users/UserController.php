@@ -96,5 +96,18 @@ class UserController extends Controller
             'name' => $data['image'],
             'path' => $path
         ]);
+        return response()->json([
+           'success' => true,
+        ],201);
+    }
+
+    public function delete($id){
+        $user = User::findOrFail($id);
+        if($user){
+            $user->delete();
+            return response()->json([
+               'success' => true,
+            ]);
+        }
     }
 }

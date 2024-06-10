@@ -14,12 +14,6 @@ class Device extends Model
         'name',
     ];
 
-    
-    protected $casts = [
-        'created_at' => 'datetime:d/m/Y h:i:s', 
-        'updated_at' => 'datetime:d/m/Y h:i:s',
-    ];
-
     public function branch(){
         return $this->belongsTo(Branch::class);
     }

@@ -3,11 +3,12 @@
 namespace App\Models\v1;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Carbon\Carbon;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
@@ -36,16 +37,6 @@ class User extends Authenticatable
         'password',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-
-     protected $casts = [
-        'created_at' => 'datetime:d/m/Y h:i:s', 
-        'updated_at' => 'datetime:d/m/Y h:i:s',
-    ];
 
     public function images(){
         return $this->morphMany(Image::class,'imageable');
@@ -64,15 +55,15 @@ class User extends Authenticatable
      public function position(){
         return $this->belongsTo(Position::class);
      }
-
-    //  public function getImageUrl()
-    //  {
-    //      // Rasm yo'li va nomini saqlash usuli, buni loyihangiz talablariga moslashtiring
-    //      if ($this->image_path && $this->image_name) {
-    //          return url("storage/" . $this->image_path . $this->image_name);
-    //      }
- 
-    //     //  // Agar rasm mavjud bo'lmasa, default rasm URL qaytarish
-    //     //  return url("storage/default.jpg");
-    //  }
+    public static function getUsersByDateAndBranch($day, $id)
+    {
+        $day = $day ? Carbon::parse($day) : Carbon::now();
+        $usersQuery = $id ? Branch::findOrFail($id)->users()->withTrashed() : static::query()->withTrashed();
+        $usersQuery->where('created_at', '<=', $day)
+                   ->where(function ($query) use ($day) {
+                       $query->whereNull('deleted_at')
+                             ->orWhere('deleted_at', '>', $day);
+                   });
+        return $usersQuery;
+    }
 }

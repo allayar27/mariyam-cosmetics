@@ -38,6 +38,13 @@ return new class extends Migration
             'phone' => '885610180',
             'password' => Hash::make('QWERTYUUJHGfds41246724688'),
         ]);
+        Employee::create([
+            'name' => 'Admin',
+            'email' => 'admin@example.com',
+            'role' => 'superadmin',
+            'phone' => '987654321',
+            'password' => Hash::make('12345678')
+        ]);
     }
 
     

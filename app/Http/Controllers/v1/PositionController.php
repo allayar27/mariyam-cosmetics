@@ -33,6 +33,18 @@ class PositionController extends Controller
     }
     public function delete(Position $position){
         if($position){
+            if($position->name =='unknown'){
+                return response()->json([
+                   'success' => false,
+                   'message' => 'You can not delete this position'
+                ],400);
+            }
+            $position_id = Position::where('name','unknown')->first()->id;
+            $users = $position->users;
+            $users->each(function($user) use ($position_id) {
+                $user->position_id = $position_id;
+                $user->save();
+            });
             $position->delete();
             return response()->json([
                'success' => true,

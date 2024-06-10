@@ -15,11 +15,4 @@ class Schedule extends Model
         'time_out',
     ];
 
-    protected $casts = [
-        'time_in' =>'datetime:h:i:s',
-        'time_out' =>'datetime:h:i:s',
-        'created_at' => 'datetime', 
-        'updated_at' => 'datetime',
-    ];
-
 }

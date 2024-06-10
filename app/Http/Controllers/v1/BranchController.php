@@ -111,16 +111,19 @@ class BranchController extends Controller
     //         'success' => true,
     //     ]);
     // }
-        public function delete(Branch $branch){
-            if($branch){
-                $branch->delete();
+    public function delete(Branch $branch)
+    {
+        if ($branch) {
+            if($branch->users()->count() > 0){
                 return response()->json([
-                   'success' => true,
-                ]);
+                   'success' => false,
+                   'message' => 'Bu filialda foydalanuvchilar mavjud'
+                ],400);
             }
+            $branch->delete();
+            return response()->json([
+                'success' => true,
+            ]);
         }
-   
-
-
-    
+    }
 }

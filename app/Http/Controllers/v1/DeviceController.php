@@ -11,7 +11,6 @@ class DeviceController extends Controller
 {
     public function all(){
         $data = Carbon::now();
-    
         return gettype($data);
     }
 }

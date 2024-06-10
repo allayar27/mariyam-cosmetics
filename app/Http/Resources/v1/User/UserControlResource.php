@@ -17,13 +17,20 @@ class UserControlResource extends JsonResource
         return [
             'id' =>$this->id,
             'name' => $this->name,
-            'position' => $this->position->name,
-            'branch' => $this->branch->name,
+            'position' => [
+                'id' => $this->position->id,
+                'name' => $this->position->name,
+            ],
+            'branch' => [
+                'id' => $this->branch->id,
+                'name' => $this->branch->name,
+            ],
             'phone' => $this->phone,
             'schedule' => [
-                'time_in' => $this->schedule->time_in->format('h:i:s'),
-                'time_out' => $this->schedule->time_out->format('h:i:s'),
+                'time_in' => $this->schedule->time_in,
+                'time_out' => $this->schedule->time_out
             ],
+            'created_at' => $this->created_at->format('Y-m-d'),
         ];
     }
 }

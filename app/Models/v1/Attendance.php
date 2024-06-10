@@ -20,14 +20,6 @@ class Attendance extends Model
         'date',
         'branch_id',
     ];
-
-    protected $casts = [
-        'time' => 'datetime:h:i:s',
-        'date' => 'datetime:d/m/Y H:i:s',
-        'created_at' => 'datetime:d/m/Y h:i:s',
-        'updated_at' => 'datetime:d/m/Y h:i:s',
-    ];
-
     public function images()
     {
         return $this->morphMany(Image::class, 'imageable');

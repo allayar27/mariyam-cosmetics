@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\v1\Branch;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,6 +15,7 @@ return new class extends Migration
         Schema::create('work__days', function (Blueprint $table) {
             $table->id();
             $table->date('work_day');
+            $table->foreignIdFor(Branch::class);
             $table->integer('total_workers')->nullable();
             $table->integer('workers_count')->nullable();
             $table->integer('late_workers')->nullable();
