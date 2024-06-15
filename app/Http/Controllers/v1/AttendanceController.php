@@ -61,4 +61,8 @@ class AttendanceController extends Controller
             ], 500);
         }
     }
+
+    public function getall(){
+        return "";
+    }
 }
