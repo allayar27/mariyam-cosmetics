@@ -43,7 +43,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('user/add_image/{id}', [UserController::class, 'add_image']);
         Route::delete('user/delete/{user}', [UserController::class, 'delete']);
 
+        //image
+        Route::delete('image/delete/{id}', [UserController::class, 'delete_image']);
+
     });
+    
     Route::get('positions', [PositionController::class, 'all_positions']);
     Route::get('branches', [BranchController::class, 'all']); //8
     Route::get('users/attendance', [UserAttendanceController::class, 'all']); //2
@@ -57,6 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('note/comers', [UserAttendanceController::class, 'noteComers']); //9
     Route::get('comers',[UserAttendanceController::class,'comers']); 
     Route::get('monthly', [UserAttendanceController::class,'monthly']); //7
+    Route::get('month',[UserAttendanceController::class,'month']); //7
 
 
 });

@@ -25,10 +25,10 @@ class UserAddRequest extends FormRequest
             'name' => 'required|string',
             'position_id' => 'required|exists:positions,id',
             'branch_id' => 'required|exists:branches,id',
-            'time_in' => ['required', 'regex:/^(2[0-3]|[01][0-9]):([0-5][0-9])$/'],
-            'time_out' => ['required', 'regex:/^(2[0-3]|[01][0-9]):([0-5][0-9])$/'],
+            'time_in' => ['required', 'date_format:H:i'],
+            'time_out' => ['required', 'date_format:H:i'],
             'phone'  => 'required',
-            'images' => 'required|array',
+            'images' => 'array',
             'images.*' => 'file',
         ];
     }

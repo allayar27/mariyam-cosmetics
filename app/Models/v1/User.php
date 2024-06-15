@@ -57,7 +57,7 @@ class User extends Authenticatable
      }
     public static function getUsersByDateAndBranch($day, $id)
     {
-        $day = $day ? Carbon::parse($day) : Carbon::now();
+        $day = $day ? Carbon::parse($day)->addDay() : Carbon::now();
         $usersQuery = $id ? Branch::findOrFail($id)->users()->withTrashed() : static::query()->withTrashed();
         $usersQuery->where('created_at', '<=', $day)
                    ->where(function ($query) use ($day) {

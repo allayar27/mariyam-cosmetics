@@ -3,20 +3,22 @@
 namespace App\Http\Controllers\v1\Users;
 
 use App\Models\v1\User;
+use App\Models\v1\Image;
+use App\Models\v1\Schedule;
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\v1\User\UserAddImageRequest;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\v1\User\UserAddRequest;
 use App\Http\Requests\v1\User\UserUpdateRequest;
+use App\Http\Requests\v1\User\UserAddImageRequest;
 use App\Http\Resources\v1\User\UserImagesResource;
-use App\Models\v1\Schedule;
-use GuzzleHttp\Psr7\Response;
 
 class UserController extends Controller
 {
-    public function add(UserAddRequest $request){
+    public function add(UserAddRequest $request)
+    {
         $data = $request->validated();
         $user = User::create([
             'name' => $data['name'],
@@ -29,85 +31,103 @@ class UserController extends Controller
             'time_in' => $data['time_in'],
             'time_out' => $data['time_out']
         ]);
-        if ($request->hasFile('images')) {
-            $path = 'users/' . $user->id . '/images/';
-            Storage::makeDirectory('public/' . $path);
-        
-            foreach ($request->file('images') as $image) {
-                $image_name = time() . "-" . Str::random(10) . "." . $image->getClientOriginalExtension();
-                $image->move(storage_path('app/public/' . $path), $image_name);
-        
-                $user->images()->create([
-                    'name' => $image_name,
-                    'path' => $path 
-                ]);
-            }
-        }
-        
+
+        $this->uploadImages($user, $request);
         return response()->json([
             'success' => true,
             'message' => 'Successfully created'
         ], 201);
     }
-       
-    public function all(){
+
+    public function all()
+    {
         $users = User::latest()->get();
         return response()->json([
+            'total' => $users->count(),
             'data' => UserImagesResource::collection($users)
         ]);
     }
 
-    public function update($id,UserUpdateRequest $request){
+    public function update($id, UserUpdateRequest $request)
+    {
         $user = User::findOrFail($id);
-        if($user){
-            $user->update([
-                'name' => $request->input('name',$user->name),
-                'branch_id' => $request->input('branch_id',$user->branch_id),
-                'position_id' => $request->input('position_id',$user->position_id),
-                'phone' => $request->input('phone',$user->phone),
-            ]);
-            $user->schedule()->update([
-                'time_in' => $request->input('time_in',$user->schedule->time_in),
-                'time_out' => $request->input('time_out',$user->schedule->time_out),
-            ]);
-            if ($request->hasFile('images')) {
-                $path = 'users/' . $user->id . '/images/';
-                foreach ($request->file('images') as $image) {
-                    $image_name = time() . "-" . Str::random(10) . "." . $image->getClientOriginalExtension();
-                    $image->move(storage_path('app/public/' . $path), $image_name);
-                    $user->images()->create([
-                        'name' => $image_name,
-                        'path' => $path 
-                    ]);
-                }
+        if ($user) {
+            $data = $request->validated();
+            $user->update($data);
+            if ($user->schedule) {
+                $user->schedule->update($data);
+            } else {
+                $user->schedule()->create($data);
             }
+
+            $this->uploadImages($user, $request);
+
             return response()->json([
-                'success' => true,
+                'uccess' => true,
             ]);
-            
         }
     }
 
-    public function add_image($id,UserAddImageRequest $request){
+    public function add_image($id, UserAddImageRequest $request)
+    {
         $user =  User::findOrFail($id);
         $data = $request->validated();
         $path = 'users/' . $user->id . '/images/';
-        $user->images()->create([
-            'name' => $data['image'],
-            'path' => $path
-        ]);
-        return response()->json([
-           'success' => true,
-        ],201);
+        $file_path = $path . $data['image'];
+        if (Storage::exists($file_path)) {
+            $user->images()->create([
+                'name' => $data['image'],
+                'path' => $path
+            ]);
+            return response()->json([
+                'success' => true,
+            ], 201);
+        }
     }
 
-    public function delete($id){
+    public function delete($id)
+    {
         $user = User::findOrFail($id);
-        if($user){
+        if ($user) {
             $user->delete();
             return response()->json([
-               'success' => true,
+                'success' => true,
             ]);
         }
+    }
+
+    protected function uploadImages($user, $request)
+    {
+        if ($request->hasFile('images')) {
+            $path = 'users/' . $user->id . '/images/';
+            foreach ($request->file('images') as $image) {
+                $image_name = time() . "-" . Str::random(10) . "." . $image->getClientOriginalExtension();
+                $image->move(storage_path('app/public/' . $path), $image_name);
+                $user->images()->create([
+                    'name' => $image_name,
+                    'path' => $path
+                ]);
+            }
+        }
+    }
+
+    public function delete_image($id)
+    {
+        $image = Image::findOrFail($id);
+        if ($image) {
+            $image_path = 'public/'.$image->path . $image->name;
+            if (Storage::exists($image_path)) {
+                Storage::delete($image_path);
+                $image->delete();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Image deleted successfully'
+                ]);
+            }
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Image not found'
+        ], 404);
     }
 }

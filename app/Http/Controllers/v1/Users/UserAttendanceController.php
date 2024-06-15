@@ -39,10 +39,6 @@ class UserAttendanceController extends Controller
         $perPage = $request->input('per_page', 10);
         $day = Carbon::now();
         $usersQuery = User::getUsersByDateAndBranch($day, $id);
-        if ($id) {
-            $branch = Branch::findOrFail($id);
-            $usersQuery->where('branch_id', $branch->id);
-        }
         if ($position_id) {
             $position = Position::findOrFail($position_id);
             $usersQuery->where('position_id', $position->id);
@@ -59,8 +55,8 @@ class UserAttendanceController extends Controller
     public function daily()
     {
         $id = request('id');
-        $day = request('day') ?? Carbon::today();
-        $usersQuery = $id ? Branch::findOrFail($id)->users() : User::query();
+        $day = request('day') ?? Carbon::now();
+        $usersQuery =User::getUsersByDateAndBranch($day, $id);
         $allUsersCount = $usersQuery->count();
         $attendancesQuery = Attendance::query();
         if ($id) {
@@ -84,19 +80,16 @@ class UserAttendanceController extends Controller
     //last comers//3
     public function lastAttendances()
     {
-        $id = request('id');
-        $day = request('day') ?? Carbon::today();
-        $attendances = Attendance::whereDate('created_at', $day)->latest()->paginate(request('per_page', 10));
-        $collection = [
-            'attendances' => []
-        ];
-        foreach ($attendances as $attendance) {
-            $collection['attendances'][] = new LastAttendancesResource($attendance);
-        }
+        $attendances = request('id')
+            ? Attendance::where('branch_id', request('id'))->whereDate('day', request('day', Carbon::today()))->latest()
+            : Attendance::whereDate('created_at', request('day', Carbon::today()))->latest();
+
+        $attendances = $attendances->paginate(request('per_page', 10));
+
         return response()->json([
-            'success' => true,
+            'uccess' => true,
             'total' => $attendances->count(),
-            'data' => $collection['attendances'],
+            'data' => LastAttendancesResource::collection($attendances),
         ]);
     }
 
@@ -109,7 +102,7 @@ class UserAttendanceController extends Controller
         $branches = Branch::all();
         $data = $branches->map(function ($branch) use ($startDate, $endDate) {
             $workDays = Work_Days::whereBetween('work_day', [$startDate, $endDate])
-                ->where('branch_id', $branch->id)
+                ->where('branch_id', $branch->id)->where('type', 'work_day')
                 ->get();
             return [
                 'id' => $branch->id,
@@ -125,7 +118,7 @@ class UserAttendanceController extends Controller
             ];
         });
         return response()->json([
-           'success' => true,
+            'success' => true,
             'total' => $data->count(),
             'data' => $data,
         ]);
@@ -335,9 +328,7 @@ class UserAttendanceController extends Controller
         $branchId = $request->input('id');
         $today = $request->input('day') ?? Carbon::now();
         $perPage = $request->input('per_page', 10);
-
         $usersQuery = User::getUsersByDateAndBranch($today, $branchId);
-
         $users = $usersQuery->with(['attendance' => function ($query) use ($today) {
             $query->where('type', 'in')->whereDate('day', $today);
         }])
@@ -352,6 +343,36 @@ class UserAttendanceController extends Controller
             'per_page' => $users->perPage(),
             'last_page' => $users->lastPage(),
             'data' => UsersAttendanceResource::collection($users->items())
+        ]);
+    }
+
+    public function month(Request $request)
+    {
+        $month = $request->input('month') ?? Carbon::now()->format('Y-m');
+        $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
+        $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
+        $perPage = $request->input('per_page', 10);
+
+        $workDays = DB::table('work__days')
+            ->whereBetween('work_day', [$startDate, $endDate])
+            ->where('type', 'work_day')
+            ->select('work_day', 'branch_id', 'workers_count', 'late_workers', 'total_workers')
+            ->get();
+
+        $collection = [];
+        foreach ($workDays as $day) {
+            $collection[$day->work_day]['branches'][] = [
+                'branch_id' => $day->branch_id,
+                'branch' => Branch::find($day->branch_id)->name,
+                'total_workers' => $day->total_workers,
+                'workers_count' => $day->workers_count,
+                'late_workers' => $day->late_workers,
+            ];
+        }
+
+        return response()->json([
+            'uccess' => true,
+            'data' => $collection
         ]);
     }
 }

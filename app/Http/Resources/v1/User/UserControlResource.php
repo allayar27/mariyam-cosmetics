@@ -30,6 +30,7 @@ class UserControlResource extends JsonResource
                 'time_in' => $this->schedule->time_in,
                 'time_out' => $this->schedule->time_out
             ],
+            'images' => ImagesResource::collection($this->images),
             'created_at' => $this->created_at->format('Y-m-d'),
         ];
     }
