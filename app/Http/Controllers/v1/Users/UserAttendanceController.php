@@ -168,7 +168,6 @@ class UserAttendanceController extends Controller
             'success' => true,
             'data' => [
                 'user' => new UsersWithScheduleDays($user),
-                
                 'dates' => $data,
             ]
         ]);
