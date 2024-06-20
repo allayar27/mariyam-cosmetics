@@ -126,12 +126,16 @@ class ScheduleController extends Controller
     }
 
     public function all(Request $request){
-        $day = $request->day ? Carbon::parse($request->day) : Carbon::now();
-        $id = $request->id ?? null;
-        $user=  User::getWorkersByDate($day,$id)->count();
+        $schedule = Schedule::first();
+        $users = User::all();
+        foreach ($users as $user) {
+            $user->update([
+                'schedule_id' => $schedule->id,
+            ]);
+        }
         return response()->json([
            'success' => true,
-            'total' => $user,
+            'total' => $users->count(),
         ]);
     }
 }
