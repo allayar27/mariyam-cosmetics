@@ -26,7 +26,7 @@ class AttendanceAddRequest extends FormRequest
             'images' => 'required|array',
             'images.*' => 'required|string',
             'device_id' => 'required|exists:devices,id',
-            'time' => 'required|date_format:H:i',
+            'time' => 'required',
             'score' => 'required|numeric'
         ];        
     }
