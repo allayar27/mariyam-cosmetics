@@ -16,7 +16,7 @@ class DaysResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'day' => $this->type,
+            'day' => $this->day,
             'time_in' => $this->time_in,
             'time_out' => $this->time_out,
             'is_work_day' => $this->is_work_day,

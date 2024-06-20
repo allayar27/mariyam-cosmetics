@@ -13,7 +13,7 @@ class Weekly extends Model
         'schedule_id',
         'time_in',
         'time_out',
-        'type',
+        'day',
         'is_work_day',
     ];
 }
