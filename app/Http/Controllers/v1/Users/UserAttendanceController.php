@@ -12,6 +12,7 @@ use App\Http\Resources\v1\User\LastAttendancesResource;
 use App\Http\Resources\v1\User\UserControlResource;
 use App\Http\Resources\v1\User\UsersAttendanceResource;
 use App\Http\Resources\v2\Schedule\DaysResource;
+use App\Http\Resources\v2\Users\UsersWithScheduleDays;
 use App\Models\v1\Attendance;
 use App\Models\v1\Position;
 use App\Models\v1\Work_Days;
@@ -49,7 +50,7 @@ class UserAttendanceController extends Controller
         return response()->json([
             'success' => true,
             'total' => $users->total(),
-            'data' => UserControlResource::collection($users),
+            'data' => UsersWithScheduleDays::collection($users),
         ]);
     }
 
@@ -166,12 +167,8 @@ class UserAttendanceController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'user' => new UserControlResource($user),
-                'schedule' =>[
-                    'id' => $user->schedule->id,
-                    'name' => $user->schedule->name,
-                    'days' => DaysResource::collection($user->schedule->days)
-                ],
+                'user' => new UsersWithScheduleDays($user),
+                
                 'dates' => $data,
             ]
         ]);
