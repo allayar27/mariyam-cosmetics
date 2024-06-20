@@ -126,16 +126,11 @@ class ScheduleController extends Controller
     }
 
     public function all(Request $request){
-        $schedule = Schedule::first();
-        $users = User::all();
-        foreach ($users as $user) {
-            $user->update([
-                'schedule_id' => $schedule->id,
-            ]);
-        }
+        $schedules  = Schedule::all();
         return response()->json([
-           'success' => true,
-            'total' => $users->count(),
+            'success' => true,
+            'total' => $schedules->count(),
+            'data' => $schedules
         ]);
     }
 }
