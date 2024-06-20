@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\v2\ScheduleAddRequest;
+use App\Http\Resources\v2\Schedule\SchedulesResource;
 
 class ScheduleController extends Controller
 {
@@ -130,7 +131,7 @@ class ScheduleController extends Controller
         return response()->json([
             'success' => true,
             'total' => $schedules->count(),
-            'data' => $schedules
+            'data' => SchedulesResource::collection($schedules)
         ]);
     }
 }
