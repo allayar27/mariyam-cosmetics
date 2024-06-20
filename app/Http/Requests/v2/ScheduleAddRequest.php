@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\v1\User;
+namespace App\Http\Requests\v2;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UserAddRequest extends FormRequest
+class ScheduleAddRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,13 +22,12 @@ class UserAddRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string',
-            'position_id' => 'required|exists:positions,id',
-            'branch_id' => 'required|exists:branches,id',
-            'schedule_id' => 'required|exists:schedules,id',
-            'phone'  => 'required',
-            'images' => 'array',
-            'images.*' => 'file',
+            'name' => 'required|string|max:255|unique:schedules,name',
+            'days' => 'required|array|size:7',
+            'days.*.day_of_week' => 'required|string',
+            'days.*.time_in' => 'nullable|date_format:H:i',
+            'days.*.time_out' => 'nullable|date_format:H:i',
+            'days.*.is_work_day' => 'required|boolean',
         ];
     }
 }

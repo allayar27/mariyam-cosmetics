@@ -18,7 +18,6 @@ class AttendanceObserver
     public function created(Attendance $attendance)
     {
         $this->updateAttendanceTypes($attendance);
-        
     }
     protected function updateAttendanceTypes(Attendance $attendance)
     {
@@ -32,7 +31,7 @@ class AttendanceObserver
             return;
         }
         $firstAttendance = $todayAttendances->first();
-        $firstAttendance->update(['type' => 'in']); 
+        $firstAttendance->update(['type' => 'in']);
         if ($todayAttendances->count() > 1) {
             $lastAttendance = $todayAttendances->last();
             $lastAttendance->update(['type' => 'out']);
@@ -43,52 +42,55 @@ class AttendanceObserver
         $this->updateWorkDay($attendance);
     }
 
-    protected function updateLateWorkers(Attendance $attendance, $user)
-    {
-        if (!$user) {
-            return;
-        }
-        $actualArrivalTime = Carbon::parse($attendance->time);
-        $scheduledArrivalTime = Carbon::parse($user->schedule->time_in);
-        if ($attendance->type == 'in' && $actualArrivalTime->gt($scheduledArrivalTime)) {
-            $workDay = Work_Days::firstOrCreate(
-                ['work_day' => Carbon::today(), 'branch_id' => $user->branch_id],
-                ['late_workers' => 0],
-                ['total_workers' => $user->branch->users()->count()]
-            );
-            $workDay->late_workers += 1;
-            $workDay->save();
-        }
-    }
+    // protected function updateLateWorkers(Attendance $attendance, $user)
+    // {
+    //     if (!$user) {
+    //         return;
+    //     }
+    //     $actualArrivalTime = Carbon::parse($attendance->time);
+    //     $scheduledArrivalTime = Carbon::parse($user->schedule->time_in);
+    //     if ($attendance->type == 'in' && $actualArrivalTime->gt($scheduledArrivalTime)) {
+    //         $workDay = Work_Days::firstOrCreate(
+    //             ['work_day' => Carbon::today(), 'branch_id' => $user->branch_id],
+    //             ['late_workers' => 0],
+    //             ['total_workers' => $user->branch->users()->count()]
+    //         );
+    //         $workDay->late_workers += 1;
+    //         $workDay->save();
+    //     }
+    // }
     protected function updateWorkDay(Attendance $attendance)
     {
         $user = User::find($attendance->user_id);
         if (!$user) {
             return;
         }
-        $workDay = Work_Days::firstOrCreate([
-            'work_day' => Carbon::today(),
-            'branch_id' => $user->branch_id,
-            'total_workers' => $user->branch->users()->count(),
-        ]);
+        $day = Carbon::today();
+        $workDay = Work_Days::updateOrCreate(
+            [
+                'work_day' => Carbon::today(),
+                'branch_id' => $user->branch_id,
+            ],
+            [
+                'total_workers' => $user->branch->users()->count(),
+            ]
+        );
+        $attendances = Attendance::where('type', 'in')->whereDate('day', Carbon::today())->where('branch_id', $user->branch_id)->get();
+        $lateComersCount = $attendances->filter(function ($attendance) use ($day) {
+            return $attendance->time > $attendance->user->schedule->time_in($day);
+        })->count();
         $workDay->update([
-            'workers_count' => Attendance::where('type', 'in')->whereDate('day',Carbon::today())->where('branch_id', $user->branch_id)->count(),
-            'late_workers' => Attendance::whereDate('created_at', Carbon::today())
-            ->where('type', 'in')
-            ->whereHas('user', function($query)  use ($user){
-                $query->where('branch_id', $user->branch_id);
-            })
-            ->whereHas('user.schedule', function($scheduleQuery) {
-                $scheduleQuery->whereColumn('attendances.time', '>', 'schedules.time_in');
-            })
-            ->count(),
+            'workers_count' => Attendance::where('type', 'in')->whereDate('day', Carbon::today())->where('branch_id', $user->branch_id)->count(),
+            'late_workers' => $lateComersCount
         ]);
+
         $this->checkWorkDayType($workDay);
     }
 
     protected function checkWorkDayType($workDay)
     {
-        $totalWorkers = User::count();
+        $id = null;
+        $totalWorkers = User::getWorkersByDate($workDay->work_day, $id)->count();
         $workersToday = Attendance::whereDate('day', Carbon::today())->where('type', 'in')->count();
         $percent = $workersToday * 100 / $totalWorkers;
 
@@ -98,6 +100,4 @@ class AttendanceObserver
             $workDay->update(['type' => 'none']);
         }
     }
-
-    
 }

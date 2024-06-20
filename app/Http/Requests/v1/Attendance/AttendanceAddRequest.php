@@ -22,7 +22,6 @@ class AttendanceAddRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'image_id' => 'required|exists:images,id',
             'images' => 'required|array',
             'images.*' => 'required|string',
             'device_id' => 'required|exists:devices,id',

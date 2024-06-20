@@ -24,6 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'schedule_id',
         'position_id',
         'branch_id',
     ];
@@ -43,7 +44,7 @@ class User extends Authenticatable
     }
 
     public function schedule(){
-        return $this->hasOne(Schedule::class);
+        return $this->belongsTo(Schedule::class);
     }
     public function branch(){
         return $this->belongsTo(Branch::class);
@@ -57,13 +58,28 @@ class User extends Authenticatable
      }
     public static function getUsersByDateAndBranch($day, $id)
     {
-        $day = $day ? Carbon::parse($day)->addDay() : Carbon::now();
+        $day = $day ? Carbon::parse($day)->endOfDay() : Carbon::now();
         $usersQuery = $id ? Branch::findOrFail($id)->users()->withTrashed() : static::query()->withTrashed();
         $usersQuery->where('created_at', '<=', $day)
                    ->where(function ($query) use ($day) {
                        $query->whereNull('deleted_at')
                              ->orWhere('deleted_at', '>', $day);
                    });
+        return $usersQuery;
+    }
+
+    public static function getWorkersByDate($day, $id)
+    {
+        $day = $day ? Carbon::parse($day)->endOfDay() : Carbon::now();
+        $usersQuery = $id ? Branch::findOrFail($id)->users()->withTrashed() : static::query()->withTrashed();
+        $usersQuery->whereHas('schedule.days', function ($query) use ($day) {
+            $query->where('day', $day->format('l'))
+                  ->where('is_work_day', 1); 
+        })->where('created_at', '<=', $day)
+        ->where(function ($query) use ($day) {
+            $query->whereNull('deleted_at')
+                  ->orWhere('deleted_at', '>', $day);
+        })->get();
         return $usersQuery;
     }
 }

@@ -15,10 +15,9 @@ class AttendanceController extends Controller
 {
     public function add(AttendanceAddRequest $request)
     {
-        DB::beginTransaction();
-        try {
-            $image = Image::findOrFail($request->image_id);
-            $user = $image->imageable;
+        // DB::beginTransaction();
+        // try {
+            $user = User::findOrFail($request->user_id);
             if (!($user instanceof User)) {
                 return response()->json([
                     'error' => 'Image is not associated with a valid user.'
@@ -50,15 +49,15 @@ class AttendanceController extends Controller
                 'success' => true,
                 'message' => 'Attendance recorded successfully',
             ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
 
-            return response()->json([
-                'error' => 'An error occurred while recording attendance.',
-                'details' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'body'
-            ], 500);
-        }
+        //     return response()->json([
+        //         'error' => 'An error occurred while recording attendance.',
+        //         'details' => $e->getMessage(),
+        //         'line' => $e->getLine(),
+        //         'body'
+        //     ], 500);
+        // }
     }
 }

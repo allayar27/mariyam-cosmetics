@@ -14,12 +14,7 @@ return new class extends Migration
     {
         Schema::create('schedules', function (Blueprint $table) {
             $table->id();
-            $table->time('time_in');
-            $table->time('time_out');
-            $table->timestamps();
-            $table->foreignIdFor(User::class);
-            $table->index('time_in');
-            $table->index('time_out');
+            $table->string('name');
         });
     }
 

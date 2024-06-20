@@ -17,6 +17,7 @@ class PositionsResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'users' => $this->users()->count()
         ];
     }
 }

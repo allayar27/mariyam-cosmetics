@@ -25,8 +25,6 @@ class UserUpdateRequest extends FormRequest
             'name' => 'string',
             'branch_id' => 'exists:branches,id',
             'position_id' => 'exists:positions,id',
-            'time_in' => ['regex:/^(2[0-3]|[01][0-9]):([0-5][0-9])$/'],
-            'time_out' => ['regex:/^(2[0-3]|[01][0-9]):([0-5][0-9])$/'],
             'phone' =>'string',
             'images' => 'array',
             'images.*' => 'file',

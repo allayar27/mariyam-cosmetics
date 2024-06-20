@@ -17,8 +17,8 @@ class UsersAttendanceResource extends JsonResource
     {
         $day = request('day') ?? Carbon::today()->toDateString();
         $attendanceRecord = $this->attendance()->whereDate('day', $day)->where('type', 'in')->first();
-        $lateTime = $attendanceRecord && $attendanceRecord->time > $this->schedule->time_in
-            ? Carbon::parse($attendanceRecord->time)->diffInMinutes($this->schedule->time_in)
+        $lateTime = $attendanceRecord && $attendanceRecord->time > $this->schedule->time_in($day)
+            ? Carbon::parse($attendanceRecord->time)->diffInMinutes($this->schedule->time_in($day))
             : null;
         $lateTimeFormatted = $lateTime ? gmdate('H:i', $lateTime * 60) : null;
 
@@ -34,8 +34,8 @@ class UsersAttendanceResource extends JsonResource
                 'name' => $this->branch->name,
             ],
             'schedule' => [
-                'time_in' => Carbon::parse($this->schedule->time_in)->format('H:i'),
-                'time_out' => Carbon::parse($this->schedule->time_out)->format('H:i'),
+                'time_in' => Carbon::parse($this->schedule->time_in($day))->format('H:i'),
+                'time_out' => Carbon::parse($this->schedule->time_out($day))->format('H:i'),
             ],
             'phone' => $this->phone,
             'attendance' => [

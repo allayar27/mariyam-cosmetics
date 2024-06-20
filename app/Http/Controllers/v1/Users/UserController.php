@@ -25,13 +25,8 @@ class UserController extends Controller
             'branch_id' => $data['branch_id'],
             'position_id' => $data['position_id'],
             'phone' => $data['phone'],
+            'schedule_id' => $data['schedule_id'],
         ]);
-        Schedule::create([
-            'user_id' => $user->id,
-            'time_in' => $data['time_in'],
-            'time_out' => $data['time_out']
-        ]);
-
         $this->uploadImages($user, $request);
         return response()->json([
             'success' => true,
@@ -54,14 +49,7 @@ class UserController extends Controller
         if ($user) {
             $data = $request->validated();
             $user->update($data);
-            if ($user->schedule) {
-                $user->schedule->update($data);
-            } else {
-                $user->schedule()->create($data);
-            }
-
             $this->uploadImages($user, $request);
-
             return response()->json([
                 'uccess' => true,
             ]);

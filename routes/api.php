@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\v1\BranchController;
 use App\Http\Controllers\v1\DeviceController;
 use App\Http\Controllers\v1\PositionController;
+use App\Http\Controllers\v2\ScheduleController;
 use App\Http\Controllers\v1\AttendanceController;
 use App\Http\Controllers\v1\Users\UserController;
 use App\Http\Controllers\v1\Auth\EmployeeController;
@@ -46,6 +47,12 @@ Route::middleware('auth:sanctum')->group(function () {
         //image
         Route::delete('image/delete/{id}', [UserController::class, 'delete_image']);
 
+        //schedule
+        Route::post('schedule/create', [ScheduleController::class, 'create']);
+        Route::put('schedule/update/{schedule}', [ScheduleController::class, 'update']);
+        Route::delete('schedule/delete/{schedule}', [ScheduleController::class, 'delete']);
+        Route::get('users/count', [ScheduleController::class, 'all']);
+
     });
     
     Route::get('positions', [PositionController::class, 'all_positions']);
@@ -56,7 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('daily', [UserAttendanceController::class, 'daily']); //1
     Route::get('attendances/last', [UserAttendanceController::class, 'lastAttendances']); //3
     Route::get('daily/graph', [UserAttendanceController::class, 'dailyAllUsersGraph']); //4
-    Route::get('user/information/{id}', [UserAttendanceController::class, 'aboutUser']); //6
+    Route::get('user/information/{id}', [UserAttendanceController::class, 'about']); //6
     Route::get('late/comers', [UserAttendanceController::class, 'lateComersWithDetails']); //9
     Route::get('note/comers', [UserAttendanceController::class, 'noteComers']); //9
     Route::get('comers',[UserAttendanceController::class,'comers']); 
