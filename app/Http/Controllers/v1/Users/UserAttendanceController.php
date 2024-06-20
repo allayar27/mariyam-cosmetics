@@ -11,6 +11,7 @@ use App\Http\Resources\v1\User\ImagesResource;
 use App\Http\Resources\v1\User\LastAttendancesResource;
 use App\Http\Resources\v1\User\UserControlResource;
 use App\Http\Resources\v1\User\UsersAttendanceResource;
+use App\Http\Resources\v2\Schedule\DaysResource;
 use App\Models\v1\Attendance;
 use App\Models\v1\Position;
 use App\Models\v1\Work_Days;
@@ -166,6 +167,11 @@ class UserAttendanceController extends Controller
             'success' => true,
             'data' => [
                 'user' => new UserControlResource($user),
+                'schedule' =>[
+                    'id' => $user->schedule->id,
+                    'name' => $user->schedule->name,
+                    'days' => DaysResource::collection($user->schedule->days)
+                ],
                 'dates' => $data,
             ]
         ]);
