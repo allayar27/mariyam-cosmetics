@@ -103,9 +103,9 @@ class ScheduleController extends Controller
                         'day' => $day['day']
                     ],
                     [
-                        'time_in' => $day['time_in'],
-                        'time_out' => $day['time_out'],
-                        'is_work_day' => $day['is_work_day']
+                        'time_in' => $data['time_in'],
+                        'time_out' => $data['time_out'],
+                        'is_work_day' => $data['is_work_day']
                     ]
                 );
             }
