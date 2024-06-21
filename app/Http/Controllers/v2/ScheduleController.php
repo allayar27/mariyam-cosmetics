@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\v2\ScheduleAddRequest;
 use App\Http\Resources\v2\Schedule\SchedulesResource;
+use App\Http\Requests\v2\Schedule\ScheduleUpdateRequest;
 
 class ScheduleController extends Controller
 {
@@ -76,7 +77,7 @@ class ScheduleController extends Controller
         ], 404);
     }
 
-    public function update($id, ScheduleAddRequest $request)
+    public function update($id, ScheduleUpdateRequest $request)
     {
         $data = $request->validated();
         $schedule = Schedule::findOrFail($id);
