@@ -56,7 +56,7 @@ class ScheduleController extends Controller
     public function delete($id)
     {
         $schedule = Schedule::findOrFail($id);
-        if ($schedule->id == 1) {
+        if ($schedule == Schedule::first()) {
             return response()->json([
                 'success' => false,
                 'message' => 'You can not delete this schedule'
