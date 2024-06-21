@@ -100,7 +100,7 @@ class ScheduleController extends Controller
                 Weekly::updateOrCreate(
                     [
                         'schedule_id' => $schedule->id,
-                        'day' => $day['day_of_week']
+                        'day' => $day['day']
                     ],
                     [
                         'time_in' => $day['time_in'],
