@@ -50,7 +50,6 @@ class ScheduleController extends Controller
                 'trace' => $e->getTrace(),
             ], 500);
         }
-       
     }
 
 
@@ -95,17 +94,21 @@ class ScheduleController extends Controller
             $schedule->update([
                 'name' => $data['name']
             ]);
-            $days = $schedule->days()->get();
-            foreach ($days as $day) {
+
+            // Delete existing days for the schedule
+            $schedule->days()->delete();
+
+            // Insert or update new days
+            foreach ($data['days'] as $day) {
                 Weekly::updateOrCreate(
                     [
                         'schedule_id' => $schedule->id,
-                        'day' => $day['day']
+                        'day' => $day['day_of_week']
                     ],
                     [
-                        'time_in' => $data['time_in'],
-                        'time_out' => $data['time_out'],
-                        'is_work_day' => $data['is_work_day']
+                        'time_in' => $day['time_in'],
+                        'time_out' => $day['time_out'],
+                        'is_work_day' => $day['is_work_day']
                     ]
                 );
             }
@@ -127,7 +130,8 @@ class ScheduleController extends Controller
         }
     }
 
-    public function all(Request $request){
+    public function all(Request $request)
+    {
         $schedules  = Schedule::all();
         return response()->json([
             'success' => true,
