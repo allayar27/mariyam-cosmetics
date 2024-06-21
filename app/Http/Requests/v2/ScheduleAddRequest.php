@@ -25,8 +25,8 @@ class ScheduleAddRequest extends FormRequest
             'name' => 'required|string|max:255|unique:schedules,name',
             'days' => 'required|array|size:7',
             'days.*.day_of_week' => 'required|string',
-            'days.*.time_in' => 'nullable|date_format:H:i',
-            'days.*.time_out' => 'nullable|date_format:H:i',
+            'days.*.time_in' => 'nullable',
+            'days.*.time_out' => 'nullable',
             'days.*.is_work_day' => 'required|boolean',
         ];
     }
