@@ -100,7 +100,7 @@ class ScheduleController extends Controller
 
             // Loop through the incoming days and update or insert
             foreach ($data['days'] as $day) {
-                $dayId = $existingDays[$day['day_of_week']] ?? null;
+                $dayId = $existingDays[$day['day']] ?? null;
 
                 if ($dayId) {
                     // Update existing day
@@ -118,7 +118,7 @@ class ScheduleController extends Controller
                     // Insert new day
                     DB::table('weeklies')->insert([
                         'schedule_id' => $schedule->id,
-                        'day' => $day['day_of_week'],
+                        'day' => $day['day'],
                         'time_in' => $day['time_in'],
                         'time_out' => $day['time_out'],
                         'is_work_day' => $day['is_work_day'],
