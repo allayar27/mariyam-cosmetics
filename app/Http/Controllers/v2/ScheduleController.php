@@ -100,7 +100,7 @@ class ScheduleController extends Controller
 
             // Loop through the incoming days and update or insert
             foreach ($data['days'] as $day) {
-                $dayId = $existingDays[$day['day']] ?? null;
+                $dayId = $existingDays[$day['day_of_week']] ?? null;
 
                 if ($dayId) {
                     // Update existing day
