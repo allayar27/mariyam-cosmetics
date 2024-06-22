@@ -25,6 +25,7 @@ class UserUpdateRequest extends FormRequest
             'name' => 'string',
             'branch_id' => 'exists:branches,id',
             'position_id' => 'exists:positions,id',
+            'schedule_id' => 'exists:schedules,id',
             'phone' =>'string',
             'images' => 'array',
             'images.*' => 'file',
