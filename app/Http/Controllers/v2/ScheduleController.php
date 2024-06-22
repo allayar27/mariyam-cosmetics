@@ -118,17 +118,17 @@ class ScheduleController extends Controller
                     // Insert new day
                     DB::table('weeklies')->insert([
                         'schedule_id' => $schedule->id,
-                        'day' => $day['day_of_week'],
+                        'day' => DB::raw("?"),
                         'time_in' => $day['time_in'],
                         'time_out' => $day['time_out'],
                         'is_work_day' => $day['is_work_day'],
-                    ]);
+                    ], [$day['day_of_week']]);
                 }
             }
 
             // Delete any remaining days that were not updated
             if (!empty($existingDays)) {
-                DB::table('weeklies')->whereIn('id', $existingDays)->delete();
+                DB::table('weeklies')->whereIn('day', $existingDays)->delete();
             }
 
             DB::commit();
