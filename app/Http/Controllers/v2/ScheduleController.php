@@ -95,18 +95,40 @@ class ScheduleController extends Controller
                 'name' => $data['name']
             ]);
 
-            // Delete existing days for the schedule
-            $schedule->days()->delete();
+            // Get existing days for the schedule
+            $existingDays = $schedule->days()->pluck('day', 'id')->toArray();
 
-            // Insert or update new days
+            // Loop through the incoming days and update or insert
             foreach ($data['days'] as $day) {
-                DB::table('weeklies')->insert([
-                    'schedule_id' => $schedule->id,
-                    'day' => $day['day_of_week'],
-                    'time_in' => $day['time_in'],
-                    'time_out' => $day['time_out'],
-                    'is_work_day' => $day['is_work_day'],
-                ]);
+                $dayId = $existingDays[$day['day_of_week']] ?? null;
+
+                if ($dayId) {
+                    // Update existing day
+                    DB::table('weeklies')
+                        ->where('id', $dayId)
+                        ->update([
+                            'time_in' => $day['time_in'],
+                            'time_out' => $day['time_out'],
+                            'is_work_day' => $day['is_work_day'],
+                        ]);
+
+                    // Remove the updated day from the existingDays array
+                    unset($existingDays[$day['day_of_week']]);
+                } else {
+                    // Insert new day
+                    DB::table('weeklies')->insert([
+                        'schedule_id' => $schedule->id,
+                        'day' => $day['day_of_week'],
+                        'time_in' => $day['time_in'],
+                        'time_out' => $day['time_out'],
+                        'is_work_day' => $day['is_work_day'],
+                    ]);
+                }
+            }
+
+            // Delete any remaining days that were not updated
+            if (!empty($existingDays)) {
+                DB::table('weeklies')->whereIn('id', $existingDays)->delete();
             }
 
             DB::commit();
