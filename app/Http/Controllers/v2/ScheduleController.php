@@ -118,7 +118,7 @@ class ScheduleController extends Controller
                     // Insert new day
                     DB::table('weeklies')->insert([
                         'schedule_id' => $schedule->id,
-                        'day' => $day['day'],
+                        'day' => $day['day_of_week'],
                         'time_in' => $day['time_in'],
                         'time_out' => $day['time_out'],
                         'is_work_day' => $day['is_work_day'],
