@@ -95,40 +95,18 @@ class ScheduleController extends Controller
                 'name' => $data['name']
             ]);
 
-            // Get existing days for the schedule
-            $existingDays = $schedule->days()->pluck('day', 'id')->toArray();
+            // Delete existing days for the schedule
+            $schedule->days()->delete();
 
-            // Loop through the incoming days and update or insert
+            // Insert or update new days
             foreach ($data['days'] as $day) {
-                $dayId = $existingDays[$day['day_of_week']] ?? null;
-
-                if ($dayId) {
-                    // Update existing day
-                    DB::table('weeklies')
-                        ->where('id', $dayId)
-                        ->update([
-                            'time_in' => $day['time_in'],
-                            'time_out' => $day['time_out'],
-                            'is_work_day' => $day['is_work_day'],
-                        ]);
-
-                    // Remove the updated day from the existingDays array
-                    unset($existingDays[$day['day_of_week']]);
-                } else {
-                    // Insert new day
-                    DB::table('weeklies')->insert([
-                        'schedule_id' => $schedule->id,
-                        'day' => DB::raw("?"),
-                        'time_in' => $day['time_in'],
-                        'time_out' => $day['time_out'],
-                        'is_work_day' => $day['is_work_day'],
-                    ], [$day['day_of_week']]);
-                }
-            }
-
-            // Delete any remaining days that were not updated
-            if (!empty($existingDays)) {
-                DB::table('weeklies')->whereIn('day', $existingDays)->delete();
+                DB::table('weeklies')->insert([
+                    'schedule_id' => $schedule->id,
+                    'day' => $day['day_of_week'],
+                    'time_in' => $day['time_in'],
+                    'time_out' => $day['time_out'],
+                    'is_work_day' => $day['is_work_day'],
+                ]);
             }
 
             DB::commit();
