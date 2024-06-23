@@ -69,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('comers',[UserAttendanceController::class,'comers']); 
     Route::get('monthly', [UserAttendanceController::class,'monthly']); //7
     Route::get('month',[UserAttendanceController::class,'month']); //7
+    Route::get('users/byschedule',[UserAttendanceController::class,'usersbyschedule']);
 
 
 });
