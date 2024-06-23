@@ -345,11 +345,11 @@ class UserAttendanceController extends Controller
     public function usersbyschedule(Request $request){
         $id = $request->input('id') ?? null;
         $day = $request->input('day') ?? Carbon::today();
-        $users = User::getWorkersByDate($day, $id);
+        $users = User::getWorkersByDate($day, $id)->get();
         return response()->json([
             'success' => true,
             'total' => $users->count(),
-            'usesrs' => UserControlResource::collection($users)
+            'users' => UserControlResource::collection($users)
         ]);
     }
 }
