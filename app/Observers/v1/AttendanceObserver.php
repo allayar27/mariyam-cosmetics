@@ -11,7 +11,7 @@ class AttendanceObserver
 {
     private $today;
     public function __construct(){
-        $this->today = request('day')?? Carbon::today();
+        $this->today = route('day')?? Carbon::today();
     }
     public function creating(Attendance $attendance)
     {
