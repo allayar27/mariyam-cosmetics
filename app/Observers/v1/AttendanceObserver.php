@@ -6,12 +6,13 @@ use App\Models\v1\Attendance;
 use App\Models\v1\Work_Days;
 use App\Models\v1\User;
 use Carbon\Carbon;
+use GuzzleHttp\Psr7\Request;
 
 class AttendanceObserver
 {
     private $today;
     public function __construct(){
-        $this->today = route('day')?? Carbon::today();
+        $this->today = request('day') ?? Carbon::today();
     }
     public function creating(Attendance $attendance)
     {
