@@ -9,9 +9,13 @@ use Carbon\Carbon;
 
 class AttendanceObserver
 {
+    private $today;
+    public function __construct(){
+        $this->today = request('day')?? Carbon::today();
+    }
     public function creating(Attendance $attendance)
     {
-        $attendance->day = Carbon::today();
+        $attendance->day = $this->today;
         $attendance->type = 'in';
         $attendance->branch_id = $attendance->device->branch_id;
     }
@@ -22,7 +26,7 @@ class AttendanceObserver
     protected function updateAttendanceTypes(Attendance $attendance)
     {
         $user_id = $attendance->user_id;
-        $today = Carbon::today();
+        $today = $this->today;
         $todayAttendances = Attendance::where('user_id', $user_id)
             ->whereDate('created_at', $today)
             ->orderBy('created_at', 'asc')
@@ -65,7 +69,7 @@ class AttendanceObserver
         if (!$user) {
             return;
         }
-        $day = Carbon::today();
+        $day = $this->today;
         $workDay = Work_Days::updateOrCreate(
             [
                 'work_day' => Carbon::today(),
