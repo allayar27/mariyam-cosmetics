@@ -11,14 +11,17 @@ use GuzzleHttp\Psr7\Request;
 class AttendanceObserver
 {
     private $today;
+    private $time;
     public function __construct(){
-        $this->today = request('day') ?? Carbon::today();
+        $this->today = request('day') ?? Carbon::today()->parse('Y-m-d');
+        $this->time = request('time');
     }
     public function creating(Attendance $attendance)
     {
         $attendance->day = $this->today;
         $attendance->type = 'in';
         $attendance->branch_id = $attendance->device->branch_id;
+        $attendance->created_at = $this->today.' '. $this->time;
     }
     public function created(Attendance $attendance)
     {
