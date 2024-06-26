@@ -58,7 +58,7 @@ class UserAttendanceController extends Controller
     public function daily()
     {
         $id = request('id');
-        $day = request('day') ?? Carbon::now();
+        $day = request('day') ?? Carbon::today()->parse('Y-m-d');
         $usersQuery = User::getWorkersByDate($day, $id);
         $allUsersCount = $usersQuery->count();
         $attendancesQuery = Attendance::query();
