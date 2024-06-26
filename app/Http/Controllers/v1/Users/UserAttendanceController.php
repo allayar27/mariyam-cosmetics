@@ -58,7 +58,7 @@ class UserAttendanceController extends Controller
     public function daily()
     {
         $id = request('id');
-        $day = request('day') ?? Carbon::today()->parse('Y-m-d');
+        $day = request('day') ?? Carbon::today()->toDateString();
         $usersQuery = User::getWorkersByDate($day, $id);
         $allUsersCount = $usersQuery->count();
         $attendancesQuery = Attendance::query();
@@ -90,7 +90,7 @@ class UserAttendanceController extends Controller
         $attendances = $attendances->paginate(request('per_page', 10));
 
         return response()->json([
-            'uccess' => true,
+            'success' => true,
             'total' => $attendances->count(),
             'data' => LastAttendancesResource::collection($attendances),
         ]);
