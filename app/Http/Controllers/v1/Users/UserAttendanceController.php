@@ -69,6 +69,7 @@ class UserAttendanceController extends Controller
         }
         $attendances = $attendancesQuery->whereDate('day', $day)->where('type', 'in')->whereIn('user_id',$usersQuery->pluck('id'))->get();
         $allComersCount = $attendances->count();
+        return $allComersCount;
         $lateComersCount = $attendances->filter(function ($attendance) use ($day) {
             return $attendance->time > $attendance->user->schedule->time_in($day);
         })->count();
