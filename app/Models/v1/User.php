@@ -59,6 +59,9 @@ class User extends Authenticatable
     public static function getUsersByDateAndBranch($day, $id)
     {
         $day = $day ? Carbon::parse($day)->endOfDay() : Carbon::now();
+        if($day->isToday()){
+            $day = Carbon::now();
+        }
         $usersQuery = $id ? Branch::findOrFail($id)->users()->withTrashed() : static::query()->withTrashed();
         $usersQuery->where('created_at', '<=', $day)
                    ->where(function ($query) use ($day) {
@@ -70,7 +73,11 @@ class User extends Authenticatable
 
     public static function getWorkersByDate($day, $id)
     {
-        $day = $day ? Carbon::parse($day)->endOfDay() : Carbon::now();
+        $day = Carbon::parse($day);
+        if($day->isToday()){
+            $day = Carbon::now();
+        }
+        $day = $day ? Carbon::parse($day)->startOfDay() : Carbon::now();
         $usersQuery = $id ? Branch::findOrFail($id)->users()->withTrashed() : static::query()->withTrashed();
         $usersQuery->whereHas('schedule.days', function ($query) use ($day) {
             $query->where('day', $day->format('l'))

@@ -7,12 +7,14 @@ use App\Models\v1\Work_Days;
 use App\Models\v1\User;
 use Carbon\Carbon;
 use GuzzleHttp\Psr7\Request;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceObserver
 {
     private $today;
     private $time;
-    public function __construct(){
+    public function __construct()
+    {
         $this->today = request('day') ?? Carbon::today()->parse('Y-m-d');
         $this->time = request('time');
     }
@@ -21,7 +23,7 @@ class AttendanceObserver
         $attendance->day = $this->today;
         $attendance->type = 'in';
         $attendance->branch_id = $attendance->device->branch_id;
-        $attendance->created_at = $this->today.' '. $this->time;
+        $attendance->created_at = $this->today . ' ' . $this->time;
     }
     public function created(Attendance $attendance)
     {
@@ -49,24 +51,6 @@ class AttendanceObserver
         }
         $this->updateWorkDay($attendance);
     }
-
-    // protected function updateLateWorkers(Attendance $attendance, $user)
-    // {
-    //     if (!$user) {
-    //         return;
-    //     }
-    //     $actualArrivalTime = Carbon::parse($attendance->time);
-    //     $scheduledArrivalTime = Carbon::parse($user->schedule->time_in);
-    //     if ($attendance->type == 'in' && $actualArrivalTime->gt($scheduledArrivalTime)) {
-    //         $workDay = Work_Days::firstOrCreate(
-    //             ['work_day' => Carbon::today(), 'branch_id' => $user->branch_id],
-    //             ['late_workers' => 0],
-    //             ['total_workers' => $user->branch->users()->count()]
-    //         );
-    //         $workDay->late_workers += 1;
-    //         $workDay->save();
-    //     }
-    // }
     protected function updateWorkDay(Attendance $attendance)
     {
         $user = User::find($attendance->user_id);
@@ -83,9 +67,21 @@ class AttendanceObserver
                 'total_workers' => $user->branch->users()->count(),
             ]
         );
-        $attendances = Attendance::where('type', 'in')->whereDate('day', Carbon::today())->where('branch_id', $user->branch_id)->get();
+        $attendances = Attendance::with('user.schedule')
+            ->where('type', 'in')
+            ->whereDate('day', Carbon::today())
+            ->where('branch_id', $user->branch_id)
+            ->get();
+
         $lateComersCount = $attendances->filter(function ($attendance) use ($day) {
-            return $attendance->time > $attendance->user->schedule->time_in($day);
+            if ($attendance->user && $attendance->user->schedule) {
+                $isLate = $attendance->time > $attendance->user->schedule->time_in($day);
+                if ($isLate) {
+                    return true;
+                }
+            } else {
+                return false;
+            }
         })->count();
         $workDay->update([
             'workers_count' => Attendance::where('type', 'in')->whereDate('day', Carbon::today())->where('branch_id', $user->branch_id)->count(),

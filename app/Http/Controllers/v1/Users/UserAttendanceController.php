@@ -130,7 +130,7 @@ class UserAttendanceController extends Controller
     //About user v2//6
     public function about($id, Request $request)
     {
-        $user = User::findOrFail($id);
+        $user = User::withTrashed()->findOrFail($id);
         $month = $request->input('month') ?? Carbon::now()->format('Y-m');
         $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
         $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
