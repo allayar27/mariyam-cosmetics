@@ -62,20 +62,21 @@ class UserController extends Controller
         $data = $request->validated();
         $path = 'users/' . $user->id . '/images/';
         $file_path = storage_path('app/public/' . $path . $data['image']);
-        if (Storage::exists($file_path)) {
-            $user->images()->create([
-                'name' => $data['image'],
-                'path' => $path
-            ]);
-            return response()->json([
-                'success' => true,
-            ], 201);
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'Image not found'
-            ], 404);
-        }
+        $user->images()->create([
+            'name' => $data['image'],
+            'path' => $path
+        ]);
+        return response()->json([
+            'success' => true,
+        ], 201);
+        // if (Storage::exists($file_path)) {
+            
+        // } else {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Image not found'
+        //     ], 404);
+        // }
     }
 
     public function delete($id)
