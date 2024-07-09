@@ -70,6 +70,11 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
             ], 201);
+        }else{
+            return response()->json([
+                'success' => false,
+                'message' => 'Image not found'
+            ]);
         }
     }
 
