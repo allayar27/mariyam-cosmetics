@@ -58,10 +58,10 @@ class UserController extends Controller
 
     public function add_image($id, UserAddImageRequest $request)
     {
-        $user =  User::findOrFail($id);
+        $user = User::findOrFail($id);
         $data = $request->validated();
         $path = 'users/' . $user->id . '/images/';
-        $file_path = $path . $data['image'];
+        $file_path = storage_path('app/public/' . $path . $data['image']);
         if (Storage::exists($file_path)) {
             $user->images()->create([
                 'name' => $data['image'],
@@ -70,11 +70,11 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
             ], 201);
-        }else{
+        } else {
             return response()->json([
                 'success' => false,
                 'message' => 'Image not found'
-            ],404);
+            ], 404);
         }
     }
 
@@ -108,7 +108,7 @@ class UserController extends Controller
     {
         $image = Image::findOrFail($id);
         if ($image) {
-            $image_path = 'public/'.$image->path . $image->name;
+            $image_path = 'public/' . $image->path . $image->name;
             if (Storage::exists($image_path)) {
                 Storage::delete($image_path);
                 $image->delete();
