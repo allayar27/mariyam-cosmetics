@@ -5,19 +5,20 @@ namespace App\Http\Controllers\v1\Users;
 use Carbon\Carbon;
 use App\Models\v1\User;
 use App\Models\v1\Branch;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use App\Http\Resources\v1\User\ImagesResource;
-use App\Http\Resources\v1\User\LastAttendancesResource;
-use App\Http\Resources\v1\User\UserControlResource;
-use App\Http\Resources\v1\User\UsersAttendanceResource;
-use App\Http\Resources\v2\Schedule\DaysResource;
-use App\Http\Resources\v2\Users\UsersWithScheduleDays;
-use App\Models\v1\Attendance;
 use App\Models\v1\Position;
 use App\Models\v1\Work_Days;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
+use App\Models\v1\Attendance;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\v1\User\ImagesResource;
+use Illuminate\Pagination\LengthAwarePaginator;
+use App\Http\Resources\v2\Schedule\DaysResource;
+use App\Http\Resources\v1\User\UserControlResource;
+use App\Http\Resources\v2\Users\UsersWithScheduleDays;
+use App\Http\Resources\v1\User\LastAttendancesResource;
+use App\Http\Resources\v1\User\UsersAttendanceResource;
 
 class UserAttendanceController extends Controller
 {
@@ -67,10 +68,16 @@ class UserAttendanceController extends Controller
                 $query->where('branch_id', $id);
             });
         }
-        $attendances = $attendancesQuery->whereDate('day', $day)->where('type', 'in')->whereIn('user_id',$usersQuery->pluck('id'))->get();
+        $attendances = $attendancesQuery->whereDate('day', $day)->where('type', 'in')->whereIn('user_id', $usersQuery->pluck('id'))->get();
         $allComersCount = $attendances->count();
         $lateComersCount = $attendances->filter(function ($attendance) use ($day) {
-            return $attendance->time > $attendance->user->schedule->time_in($day);
+            if ($attendance->user) {
+                return $attendance->time > $attendance->user->schedule->time_in($day);
+            } else {
+                Log::info('error user' . $attendance);
+            }
+
+            return false;
         })->count();
         $notComersCount = $allUsersCount - $allComersCount;
         return [
@@ -135,7 +142,7 @@ class UserAttendanceController extends Controller
         $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
         $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
         $dates = DB::table('work__days')->whereBetween('work_day', [$startDate, $endDate])
-            ->where('type', 'work_day')->orderBy('work_day','desc')
+            ->where('type', 'work_day')->orderBy('work_day', 'desc')
             ->pluck('work_day')
             ->unique()
             ->values();
@@ -152,7 +159,7 @@ class UserAttendanceController extends Controller
                 $lateTime = Carbon::parse($out->time)->diff(Carbon::parse($user->schedule->time_out($date)));
                 $attendanceData['early'] = $lateTime->format('%H:%I');
             }
-            if ($in  or $out) {
+            if ($in or $out) {
                 $data[] = [
                     'day' => $date,
                     'in' => $in ? $in->time : null,
@@ -180,9 +187,13 @@ class UserAttendanceController extends Controller
         $today = $request->input('day') ?? Carbon::today()->toDateString();
         $perPage = $request->input('per_page', 10);
         $usersQuery = User::getWorkersByDate($today, $branchId);
-        $users = $usersQuery->with(['attendance' => function ($query) use ($today) {
-            $query->where('type', 'in')->whereDate('created_at', $today);
-        }, 'schedule', 'position'])->get();
+        $users = $usersQuery->with([
+            'attendance' => function ($query) use ($today) {
+                $query->where('type', 'in')->whereDate('created_at', $today);
+            },
+            'schedule',
+            'position'
+        ])->get();
         $latecomers = $users->filter(function ($user) use ($today) {
             $attendance = $user->attendance->first();
             return $attendance && $attendance->time > $user->schedule->time_in($today);
@@ -263,7 +274,7 @@ class UserAttendanceController extends Controller
             'branches' => []
         ];
         foreach ($branches as $branch) {
-            $branchData = $workDays->get($branch->id, (object)[
+            $branchData = $workDays->get($branch->id, (object) [
                 'on_time_total' => 0,
                 'late_total' => 0,
                 'total_workers' => 0
@@ -295,9 +306,11 @@ class UserAttendanceController extends Controller
         $today = $request->input('day') ?? Carbon::now();
         $perPage = $request->input('per_page', 10);
         $usersQuery = User::getWorkersByDate($today, $branchId);
-        $users = $usersQuery->with(['attendance' => function ($query) use ($today) {
-            $query->where('type', 'in')->whereDate('day', $today);
-        }])
+        $users = $usersQuery->with([
+            'attendance' => function ($query) use ($today) {
+                $query->where('type', 'in')->whereDate('day', $today);
+            }
+        ])
             ->whereHas('attendance', function ($query) use ($today) {
                 $query->where('type', 'in')->whereDate('created_at', $today);
             })
@@ -342,7 +355,8 @@ class UserAttendanceController extends Controller
         ]);
     }
 
-    public function usersbyschedule(Request $request){
+    public function usersbyschedule(Request $request)
+    {
         $id = $request->input('id') ?? null;
         $day = $request->input('day') ?? Carbon::today();
         $users = User::getWorkersByDate($day, $id)->get();
