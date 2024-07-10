@@ -79,7 +79,7 @@ class User extends Authenticatable
             $day = Carbon::now();
         }
         Log::info('now', ['time'=> $day]);
-        $day = $day ? Carbon::parse($day)->startOfDay() : Carbon::now();
+        // $day = $day ? Carbon::parse($day)->startOfDay() : Carbon::now();
         $usersQuery = $id ? Branch::findOrFail($id)->users()->withTrashed() : static::query()->withTrashed();
         $usersQuery->whereHas('schedule.days', function ($query) use ($day) {
             $query->where('day', $day->format('l'))
