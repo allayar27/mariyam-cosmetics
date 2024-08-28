@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\v1\Clients\AttendanceStatisticController;
+use App\Http\Controllers\v1\Clients\ClientAttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\v1\BranchController;
@@ -11,16 +13,7 @@ use App\Http\Controllers\v1\Users\UserController;
 use App\Http\Controllers\v1\Auth\EmployeeController;
 use App\Http\Controllers\v1\Users\UserAttendanceController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+
 
 Route::get('data', [DeviceController::class, 'all']);
 Route::post('employee/login', [EmployeeController::class, 'login']);
@@ -54,7 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('users/count', [ScheduleController::class, 'all']);
 
     });
-    
+
     Route::get('positions', [PositionController::class, 'all_positions']);
     Route::get('branches', [BranchController::class, 'all']); //8
     Route::get('users/attendance', [UserAttendanceController::class, 'all']); //2
@@ -66,14 +59,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('user/information/{id}', [UserAttendanceController::class, 'about']); //6
     Route::get('late/comers', [UserAttendanceController::class, 'lateComersWithDetails']); //9
     Route::get('note/comers', [UserAttendanceController::class, 'noteComers']); //9
-    Route::get('comers',[UserAttendanceController::class,'comers']); 
+    Route::get('comers',[UserAttendanceController::class,'comers']);
     Route::get('monthly', [UserAttendanceController::class,'monthly']); //7
     Route::get('month',[UserAttendanceController::class,'month']); //7
     Route::get('users/byschedule',[UserAttendanceController::class,'usersbyschedule']);
 
+    //clients
+    Route::post('client/attendance/add', [ClientAttendanceController::class, 'add']);
+    Route::get('/client/attendance/by_date', [AttendanceStatisticController::class, 'getClientsByDate']);
 
 });
 // Route::get('user/infor/{id}',[UserAttendanceController::class,'about']);//6
-// Route::post('attendance/addWithResponseJobs',[AttendanceController::class,'addWithResponseJobs']);  
+// Route::post('attendance/addWithResponseJobs',[AttendanceController::class,'addWithResponseJobs']);
 // Route::put('attendance/change',[AttendanceController::class,'change']);
 // Route::get('attendance/{id}',[AttendanceController::class,'all']);
