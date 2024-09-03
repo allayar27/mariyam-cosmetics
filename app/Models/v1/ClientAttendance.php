@@ -15,4 +15,8 @@ class ClientAttendance extends Model
     {
         return $this->belongsTo(Clients::class);
     }
+
+    public function branch(){
+        return $this->belongsTo(Branch::class);
+    }
 }

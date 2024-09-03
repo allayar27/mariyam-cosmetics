@@ -75,67 +75,41 @@ class AttendanceStatisticController extends Controller
 
         //группировка клиентов по возрастам
         $ageRanges = [
-            '1-5' => 0,
-            '6-10' => 0,
-            '11-15' => 0,
-            '16-20' => 0,
-            '21-25' => 0,
-            '26-30' => 0,
-            '31-35' => 0,
-            '36-40' => 0,
-            '41-45' => 0,
-            '46-50' => 0,
-            '51-55' => 0,
-            '56-60' => 0,
-            '61-65' => 0,
-            '66-70' => 0,
-            '71-75' => 0,
-            '76-80' => 0,
-            '81-85' => 0,
-            '86-100' > 0
+            '1-5' => [1, 5],
+            '6-10' => [6, 10],
+            '11-15' => [11, 15],
+            '16-20' => [16, 20],
+            '21-25' => [21, 25],
+            '26-30' => [26, 30],
+            '31-35' => [31, 35],
+            '36-40' => [36, 40],
+            '41-45' => [41, 45],
+            '46-50' => [46, 50],
+            '51-55' => [51, 55],
+            '56-60' => [56, 60],
+            '61-65' => [61, 65],
+            '66-70' => [66, 70],
+            '71-75' => [71, 75],
+            '76-80' => [76, 80],
+            '81-85' => [81, 85],
+            '86+' => [100]
         ];
-        $ageStatistics = $clients->groupBy(function ($client) use (&$ageRanges) {
+        $ageStatistics = collect($ageRanges)->mapWithKeys(function ($range) use ($ageRanges){
+            return [array_search($range, $ageRanges) => 0];
+        });
+
+        $ageStatistics = $clients->groupBy(function ($client) use ($ageRanges) {
             $age = $client->clients->age;
-            if ($age >= 1 && $age <= 5) {
-                return '1-5';
-            } elseif ($age >= 6 && $age <= 10) {
-                return '6-10';
-            }elseif ($age >= 11 && $age <= 15) {
-                return '11-15';
-            } elseif ($age >= 16 && $age <= 20) {
-                return '16-20';
-            }elseif ($age >= 21 && $age <= 25) {
-                return '21-25';
-            } elseif ($age >= 26 && $age <= 30) {
-                return '26-30';
-            }elseif ($age >= 31 && $age <= 35) {
-                return '31-35';
-            }elseif ($age >= 36 && $age <= 40) {
-                return '36-40';
-            } elseif ($age >= 41 && $age <= 45) {
-                return '41-45';
-            } elseif ($age >= 46 && $age <= 50) {
-                return '46-50';
-            }elseif ($age >= 51 && $age <= 55) {
-                return '51-55';
-            }elseif ($age >= 56 && $age <= 60) {
-                return '56-60';
-            } elseif ($age >= 61 && $age <= 65){
-                return '61-65';
-            }elseif ($age >= 66 && $age <= 70) {
-                return '66-70';
-            }elseif ($age >= 71 && $age <= 75) {
-                return '71-75';
-            }elseif ($age >= 76 && $age <= 80) {
-                return '76-80';
-            }elseif ($age >= 81 && $age <= 85) {
-                return '81-85';
-            } else {
-                return '86-100';
+
+            foreach ($ageRanges as $range => [$min, $max]) {
+                if ($age >= $min && $age <= $max) {
+                    return $range;
+                }
             }
+            return 'неопределенный возраст!';
         })->map(function ($group) {
             return $group->count();
-        })->reverse();
+        })->union($ageStatistics)->sortKeys();
 
         $totalCount = $clients->count();
 
