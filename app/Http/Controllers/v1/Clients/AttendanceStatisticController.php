@@ -25,10 +25,11 @@ class AttendanceStatisticController extends Controller
                 ->whereDate('date', $day)
                 ->selectRaw('CONCAT(HOUR(date), ":", LPAD(FLOOR(MINUTE(date) / 30) * 30, 2, "0")) as time,
                          SUM(CASE WHEN clients.gender = "male" THEN 1 ELSE 0 END) as male_count,
-                         SUM(CASE WHEN clients.gender = "female" THEN 1 ELSE 0 END) as female_count, COUNT(*) as client_count')
+                         SUM(CASE WHEN clients.gender = "female" THEN 1 ELSE 0 END) as female_count,
+                         COUNT(*) as client_count')
                 ->join('clients', 'client_attendances.clients_id', '=', 'clients.id')
-                ->groupBy('time', 'clients.gender')
-                ->orderBy('time')
+                ->groupBy('time')
+                ->orderByRaw('TIME(time)')
                 ->get();
 
         } elseif ($request->has(['start_date', 'end_date'])) {
@@ -36,14 +37,13 @@ class AttendanceStatisticController extends Controller
 
             $attendanceByTime = DB::table('client_attendances')
                 ->whereBetween('date', [$startDate, $endDate])
-//                    ->selectRaw('gender, CONCAT(HOUR(date), ":", LPAD(FLOOR(MINUTE(date) / 30) * 30, 2, "0")) as time,
-//                            COUNT(*) as client_count')
                 ->selectRaw('CONCAT(HOUR(date), ":", LPAD(FLOOR(MINUTE(date) / 30) * 30, 2, "0")) as time,
                          SUM(CASE WHEN clients.gender = "male" THEN 1 ELSE 0 END) as male_count,
-                         SUM(CASE WHEN clients.gender = "female" THEN 1 ELSE 0 END) as female_count, COUNT(*) as client_count')
+                         SUM(CASE WHEN clients.gender = "female" THEN 1 ELSE 0 END) as female_count,
+                         COUNT(*) as client_count')
                 ->join('clients', 'client_attendances.clients_id', '=', 'clients.id')
-                ->groupBy('time', 'clients.gender')
-                ->orderBy('time')
+                ->groupBy('time')
+                ->orderByRaw('TIME(time)')
                 ->get();
         }
         else {
@@ -54,8 +54,8 @@ class AttendanceStatisticController extends Controller
                          SUM(CASE WHEN clients.gender = "male" THEN 1 ELSE 0 END) as male_count,
                          SUM(CASE WHEN clients.gender = "female" THEN 1 ELSE 0 END) as female_count, COUNT(*) as client_count')
                 ->join('clients', 'client_attendances.clients_id', '=', 'clients.id')
-                ->groupBy('time', 'clients.gender')
-                ->orderBy('time')
+                ->groupBy('time')
+                ->orderByRaw('TIME(time)')
                 ->get();
         }
 
@@ -92,8 +92,11 @@ class AttendanceStatisticController extends Controller
             '71-75' => [71, 75],
             '76-80' => [76, 80],
             '81-85' => [81, 85],
-            '86+' => [100]
+            '86+' => [86, 100]
         ];
+
+        $orderedKeys = array_keys($ageRanges);
+
         $ageStatistics = collect($ageRanges)->mapWithKeys(function ($range) use ($ageRanges){
             return [array_search($range, $ageRanges) => 0];
         });
@@ -110,6 +113,10 @@ class AttendanceStatisticController extends Controller
         })->map(function ($group) {
             return $group->count();
         })->union($ageStatistics)->sortKeys();
+
+        $ageStatistics = $ageStatistics->sortBy(function ($value, $key) use ($orderedKeys) {
+            return array_search($key, $orderedKeys);
+        });
 
         $totalCount = $clients->count();
 
