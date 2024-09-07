@@ -90,15 +90,19 @@ class UserAttendanceController extends Controller
     //last comers//3
     public function lastAttendances()
     {
+        $perPage = request()->input('per_page', 10);
         $attendances = request('id')
             ? Attendance::where('branch_id', request('id'))->whereDate('day', request('day', Carbon::today()))->latest()
             : Attendance::whereDate('created_at', request('day', Carbon::today()))->latest();
 
-        $attendances = $attendances->paginate(request('per_page', 10));
+        //$attendances = $attendances->paginate(request('per_page', 10));
+        $attendances = $attendances->paginate($perPage);
 
         return response()->json([
             'success' => true,
-            'total' => $attendances->count(),
+            'total' => $attendances->total(),
+            'per_page' => $attendances->perPage(),
+            'last_page' => $attendances->lastPage(),
             'data' => LastAttendancesResource::collection($attendances),
         ]);
     }
@@ -317,7 +321,7 @@ class UserAttendanceController extends Controller
             ->paginate($perPage);
 
         return response()->json([
-            'uccess' => true,
+            'success' => true,
             'total' => $users->total(),
             'per_page' => $users->perPage(),
             'last_page' => $users->lastPage(),
