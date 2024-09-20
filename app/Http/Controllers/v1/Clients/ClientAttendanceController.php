@@ -28,26 +28,30 @@ class ClientAttendanceController extends Controller
             $time = Carbon::createFromFormat('Y-m-d H:i:s', $validated['date'], 'UTC');
             $yesterday = $time->copy()->subDay()->format('Y-m-d H:i:s');
 
-            // Проверяем, было ли посещение сегодня
+
             $lastAttendance = ClientAttendance::query()->with('clients')
                 ->where('device_id', $validated['device_id'])
                 ->where('clients_id', $validated['client_id'])
-                ->where('date', '<=', $yesterday)
+                ->where('date', '=', $yesterday)
                 ->latest('date')
                 ->first();
 
+            $todayAttendance = ClientAttendance::query()
+            ->where('device_id', $validated['device_id'])
+            ->where('clients_id', $validated['client_id'])
+            ->whereDate('date', '=', $time->format('Y-m-d'))
+            ->first();
+
             if ($lastAttendance) {
-                $lastTime = Carbon::createFromFormat('Y-m-d H:i:s', $lastAttendance->date, 'UTC');
+                //$lastTime = Carbon::createFromFormat('Y-m-d H:i:s', $lastAttendance->date, 'UTC');
                 $calculateAge = round(($lastAttendance->clients->age + $validated['age']) / 2);
                 $lastAttendance->clients()->update(['age' => $calculateAge]);
 
-                if($lastAttendance->score >= $validated['score']){
-                }
-                else {
+                if ($lastAttendance->score < $validated['score']) {
                     $lastAttendance->clients()->update(['gender' => $validated['gender']]);
                 }
 
-                if ($lastTime->lessThanOrEqualTo($yesterday)) {
+                if ($lastAttendance->date <= $yesterday) {
                     $userStatus = 'regular';
                 }
                 else {
@@ -58,15 +62,19 @@ class ClientAttendanceController extends Controller
                 $userStatus = 'new';
             }
 
-            // добавляем запись в таблицу посещаемость
-            ClientAttendance::query()->create([
-                'clients_id' => $client->id,
-                'device_id' => $validated['device_id'],
-                'date' => $time,
-                'score' => $validated['score'],
-                'status' => $userStatus
-            ]);
-
+            if ($todayAttendance) {
+                $userStatus = $todayAttendance->status;
+            }
+            else {
+                ClientAttendance::query()->updateOrCreate([
+                    'clients_id' => $client->id,
+                    'device_id' => $validated['device_id'],
+                    ],
+                    ['date' => $time,
+                     'score' => $validated['score'],
+                     'status' => $userStatus
+                ]);
+            }
 
             DB::commit();
 
@@ -86,4 +94,5 @@ class ClientAttendanceController extends Controller
             ], 500);
         }
     }
+
 }
