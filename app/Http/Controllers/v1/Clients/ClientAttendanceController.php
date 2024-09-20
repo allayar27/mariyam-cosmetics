@@ -46,8 +46,8 @@ class ClientAttendanceController extends Controller
                 else {
                     $lastAttendance->clients()->update(['gender' => $validated['gender']]);
                 }
-                if ($lastTime->diffInHours($time) >= 24) {
-                    // Обновляем или добавляем запись как для постоянного клиента
+
+                if ($lastTime->lessThanOrEqualTo($yesterday)) {
                     $userStatus = 'regular';
                 }
                 else {
