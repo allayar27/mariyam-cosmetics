@@ -63,13 +63,23 @@ class AttendanceStatisticController extends Controller
         $newClients = $clientQuery->clone()->where('status', 'new')->count();
 
         // Подсчитываем количество мужчин и женщин
-        $maleCount = $clientQuery->clone()->whereHas('clients', function ($query) {
+        $male = $clientQuery->clone()->whereHas('clients', function ($query) {
             $query->where('gender', 'male');
-        })->count();
-
-        $femaleCount = $clientQuery->clone()->whereHas('clients', function ($query) {
+        });
+        //$maleCount = $male->count();
+        
+        $female = $clientQuery->clone()->whereHas('clients', function ($query) {
             $query->where('gender', 'female');
-        })->count();
+        });
+
+        $malesData = [
+            'male_count' => $male->count(),
+            'males_id' => $male->distinct('clients_id')->orderBy('clients_id')->pluck('clients_id')
+        ];
+        $femalesData = [
+            'female_count' => $female->count(),
+            'females_id' => $female->distinct('clients_id')->orderBy('clients_id')->pluck('clients_id')
+        ];
 
         $clients = $clientQuery->with('clients')->get();
 
@@ -121,15 +131,15 @@ class AttendanceStatisticController extends Controller
         $totalCount = $clients->count();
 
         // Рассчитываем процентное соотношение
-        $malePercentage = $totalCount > 0 ? ($maleCount / $totalCount) * 100 : 0;
-        $femalePercentage = $totalCount > 0 ? ($femaleCount / $totalCount) * 100 : 0;
+        $malePercentage = $totalCount > 0 ? ($male->count() / $totalCount) * 100 : 0;
+        $femalePercentage = $totalCount > 0 ? ($female->count() / $totalCount) * 100 : 0;
 
         return [
             'total_clients' => $totalCount,
             'regular_clients' => $regularClients,
             'new_clients' => $newClients,
-            'male_count' => $maleCount,
-            'female_count' => $femaleCount,
+            'male' => $malesData,
+            'female' => $femalesData,
             'male_percentage' => $malePercentage,
             'female_percentage' => $femalePercentage,
             'age_statistics' => $ageStatistics,
