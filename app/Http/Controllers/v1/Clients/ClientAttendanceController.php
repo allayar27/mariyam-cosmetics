@@ -28,13 +28,28 @@ class ClientAttendanceController extends Controller
             $time = Carbon::createFromFormat('Y-m-d H:i:s', $validated['date'], 'UTC');
             $yesterday = $time->copy()->subDay()->format('Y-m-d H:i:s');
 
+            $query = ClientAttendance::query();
+            $gender = $query->where('device_id', $validated['device_id'])
+                ->where('clients_id', $validated['client_id'])->pluck('gender');
 
-            $lastAttendance = ClientAttendance::query()->with('clients')
+            $lastAttendance = $query->with('clients')
                 ->where('device_id', $validated['device_id'])
                 ->where('clients_id', $validated['client_id'])
-                ->where('date', '=', $yesterday)
+                ->where('date', '<=', $yesterday)
                 ->latest('date')
                 ->first();
+
+            
+            $male = 0;
+            $female = 0;
+            foreach ($gender as $item) {
+                if ($item == 'female') {
+                    $female++;
+                }
+                elseif ($item == 'male') {
+                    $male++;
+                }
+            }
 
             $todayAttendance = ClientAttendance::query()
             ->where('device_id', $validated['device_id'])
@@ -43,12 +58,25 @@ class ClientAttendanceController extends Controller
             ->first();
 
             if ($lastAttendance) {
-                //$lastTime = Carbon::createFromFormat('Y-m-d H:i:s', $lastAttendance->date, 'UTC');
+                
                 $calculateAge = round(($lastAttendance->clients->age + $validated['age']) / 2);
                 $lastAttendance->clients()->update(['age' => $calculateAge]);
-
-                if ($lastAttendance->score < $validated['score']) {
-                    $lastAttendance->clients()->update(['gender' => $validated['gender']]);
+        
+                if ($male > $female) {
+                    if ($validated['gender'] == 'female') {
+                        $lastAttendance->clients()->update(['gender' => 'male']);
+                    }
+                        
+                }
+                elseif ($female > $male) {
+                    if ($validated['gender'] == 'male') {
+                        $lastAttendance->clients()->update(['gender' => 'female']);
+                    }
+                }
+                else {
+                    if ($lastAttendance->score < $validated['score']) {
+                        $lastAttendance->clients()->update(['gender' => $validated['gender']]);
+                    }
                 }
 
                 if ($lastAttendance->date <= $yesterday) {
@@ -62,19 +90,19 @@ class ClientAttendanceController extends Controller
                 $userStatus = 'new';
             }
 
-            if ($todayAttendance) {
-                $userStatus = $todayAttendance->status;
-            }
-            else {
-                ClientAttendance::query()->updateOrCreate([
+            // if ($todayAttendance) {
+            //     $userStatus = $todayAttendance->status;
+            // }
+            // else {
+                ClientAttendance::query()->create([
                     'clients_id' => $client->id,
                     'device_id' => $validated['device_id'],
-                    ],
-                    ['date' => $time,
-                     'score' => $validated['score'],
-                     'status' => $userStatus
+                    'date' => $time,
+                    'score' => $validated['score'],
+                    'status' => $userStatus,
+                    'gender' => $validated['gender']
                 ]);
-            }
+            //}
 
             DB::commit();
 
