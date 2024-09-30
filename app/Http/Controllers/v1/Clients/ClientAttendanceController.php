@@ -51,11 +51,11 @@ class ClientAttendanceController extends Controller
                 }
             }
 
-            $todayAttendance = ClientAttendance::query()
-            ->where('device_id', $validated['device_id'])
-            ->where('clients_id', $validated['client_id'])
-            ->whereDate('date', '=', $time->format('Y-m-d'))
-            ->first();
+            // $todayAttendance = ClientAttendance::query()
+            // ->where('device_id', $validated['device_id'])
+            // ->where('clients_id', $validated['client_id'])
+            // ->whereDate('date', '=', $time->format('Y-m-d'))
+            // ->first();
 
             if ($lastAttendance) {
                 

@@ -11,7 +11,7 @@ class Clients extends Model
     use HasFactory;
 
     protected $table = 'clients';
-    protected $guarded = ['id'];
+    protected $fillable = ['id', 'gender', 'age'];
 
     public function attendances() {
         return $this->hasMany(ClientAttendance::class);
