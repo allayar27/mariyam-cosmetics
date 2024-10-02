@@ -74,11 +74,11 @@ class AttendanceStatisticController extends Controller
 
         $malesData = [
             'male_count' => $male->count(),
-            'males_id' => $male->distinct('clients_id')->orderBy('clients_id')->pluck('clients_id')
+            'males_id' => $male->orderBy('clients_id')->pluck('clients_id')
         ];
         $femalesData = [
             'female_count' => $female->count(),
-            'females_id' => $female->distinct('clients_id')->orderBy('clients_id')->pluck('clients_id')
+            'females_id' => $female->orderBy('clients_id')->pluck('clients_id')
         ];
 
         $clients = $clientQuery->with('clients')->get();

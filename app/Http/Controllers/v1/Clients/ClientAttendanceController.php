@@ -26,7 +26,7 @@ class ClientAttendanceController extends Controller
                 ]);
 
             $time = Carbon::createFromFormat('Y-m-d H:i:s', $validated['date'], 'UTC');
-            $yesterday = $time->copy()->subDay()->format('Y-m-d H:i:s');
+            $yesterday = $time->copy()->subDay()->format('Y-m-d');
 
             $query = ClientAttendance::query();
             $gender = $query->where('device_id', $validated['device_id'])
@@ -35,10 +35,13 @@ class ClientAttendanceController extends Controller
             $lastAttendance = $query->with('clients')
                 ->where('device_id', $validated['device_id'])
                 ->where('clients_id', $validated['client_id'])
-                ->where('date', '<=', $yesterday)
+                ->whereDate('date', '<=', $yesterday)
                 ->latest('date')
                 ->first();
-
+                // if ($lastAttendance) {
+                // return $lastAttendance;
+                // }
+            
             
             $male = 0;
             $female = 0;
@@ -51,13 +54,15 @@ class ClientAttendanceController extends Controller
                 }
             }
 
-            // $todayAttendance = ClientAttendance::query()
-            // ->where('device_id', $validated['device_id'])
-            // ->where('clients_id', $validated['client_id'])
-            // ->whereDate('date', '=', $time->format('Y-m-d'))
-            // ->first();
+            $todayAttendance = ClientAttendance::query()
+            ->where('device_id', $validated['device_id'])
+            ->where('clients_id', $validated['client_id'])
+            ->whereDate('date', '=', $time->format('Y-m-d'))
+            ->first();
+            //return $todayAttendance;
 
-            if ($lastAttendance) {
+            if (!$todayAttendance && $lastAttendance) {
+                //return $lastAttendance;
                 
                 $calculateAge = round(($lastAttendance->clients->age + $validated['age']) / 2);
                 $lastAttendance->clients()->update(['age' => $calculateAge]);
@@ -79,21 +84,14 @@ class ClientAttendanceController extends Controller
                     }
                 }
 
-                if ($lastAttendance->date <= $yesterday) {
+                if (Carbon::parse($lastAttendance->date)->format('Y-m-d') <= $yesterday) {
+                    //return $lastAttendance->date;
                     $userStatus = 'regular';
                 }
                 else {
                     $userStatus = 'new';
                 }
-            }
-            else {
-                $userStatus = 'new';
-            }
 
-            // if ($todayAttendance) {
-            //     $userStatus = $todayAttendance->status;
-            // }
-            // else {
                 ClientAttendance::query()->create([
                     'clients_id' => $client->id,
                     'device_id' => $validated['device_id'],
@@ -102,7 +100,24 @@ class ClientAttendanceController extends Controller
                     'status' => $userStatus,
                     'gender' => $validated['gender']
                 ]);
-            //}
+            }
+            else {
+                $userStatus = 'new';
+                //return;
+            }
+
+            if (!$todayAttendance && !$lastAttendance) {
+                //$userStatus = $todayAttendance->status;
+                ClientAttendance::query()->create([
+                    'clients_id' => $client->id,
+                    'device_id' => $validated['device_id'],
+                    'date' => $time,
+                    'score' => $validated['score'],
+                    'status' => $userStatus,
+                    'gender' => $validated['gender']
+                ]);
+            }
+            
 
             DB::commit();
 
