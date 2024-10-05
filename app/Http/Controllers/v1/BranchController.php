@@ -8,8 +8,7 @@ use App\Models\v1\Branch;
 use App\Models\v1\Device;
 use App\Models\v1\Work_Days;
 use Illuminate\Http\Request;
-use App\Models\v1\Attendance;
-use Illuminate\Support\Facades\DB;
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\v1\Branch\BranchAddRequest;
 use App\Http\Resources\v1\Branch\BranchsResource;

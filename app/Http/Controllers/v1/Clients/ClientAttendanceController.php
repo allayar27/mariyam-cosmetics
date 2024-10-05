@@ -92,21 +92,21 @@ class ClientAttendanceController extends Controller
                     $userStatus = 'new';
                 }
 
-                ClientAttendance::query()->create([
-                    'clients_id' => $client->id,
-                    'device_id' => $validated['device_id'],
-                    'date' => $time,
-                    'score' => $validated['score'],
-                    'status' => $userStatus,
-                    'gender' => $validated['gender']
-                ]);
+                // ClientAttendance::query()->create([
+                //     'clients_id' => $client->id,
+                //     'device_id' => $validated['device_id'],
+                //     'date' => $time,
+                //     'score' => $validated['score'],
+                //     'status' => $userStatus,
+                //     'gender' => $validated['gender']
+                // ]);
             }
             else {
                 $userStatus = 'new';
                 //return;
             }
 
-            if (!$todayAttendance && !$lastAttendance) {
+            // if (!$todayAttendance && !$lastAttendance) {
                 //$userStatus = $todayAttendance->status;
                 ClientAttendance::query()->create([
                     'clients_id' => $client->id,
@@ -116,7 +116,7 @@ class ClientAttendanceController extends Controller
                     'status' => $userStatus,
                     'gender' => $validated['gender']
                 ]);
-            }
+            //}
             
 
             DB::commit();
