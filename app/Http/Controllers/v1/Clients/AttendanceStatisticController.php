@@ -21,52 +21,68 @@ class AttendanceStatisticController extends Controller
         if ($request->has('day')) {
             $clientQuery = $query->whereDate('date', $day);
 
-            $attendanceByTime = DB::table('client_attendances')
+            $uniqueClients = DB::table('client_attendances')
                 ->whereDate('date', $day)
-                ->selectRaw('client_attendances.clients_id, CONCAT(HOUR(date), ":", LPAD(FLOOR(MINUTE(date) / 30) * 30, 2, "0")) as time,
-                         SUM(CASE WHEN clients.gender = "male" THEN 1 ELSE 0 END) as male_count,
-                         SUM(CASE WHEN clients.gender = "female" THEN 1 ELSE 0 END) as female_count,
-                         COUNT(*) as client_count')
                 ->join('clients', 'client_attendances.clients_id', '=', 'clients.id')
-                ->groupBy('client_attendances.clients_id', 'time')
-                ->orderByRaw('TIME(time)')
-                ->get()->unique('clients_id')->values();
+                ->selectRaw('clients_id, clients.gender, MIN(CONCAT(HOUR(date), ":", LPAD(FLOOR(MINUTE(date) / 30) * 30, 2, "0"))) as first_time')
+                ->groupBy('clients_id', 'clients.gender')
+                ->get();
+
+            $attendanceByTime = $uniqueClients->groupBy('first_time')->map(function ($group) {
+                return [
+                    'time' => $group->first()->first_time,
+                    'male_count' => $group->where('gender', 'male')->count(),
+                    'female_count' => $group->where('gender', 'female')->count(),
+                    'client_count' => $group->count(),
+                ];
+            })->values();
 
         } elseif ($request->has(['start_date', 'end_date'])) {
             $clientQuery = $query->whereBetween('date', [$startDate, $endDate]);
 
-            $attendanceByTime = DB::table('client_attendances')
+            $uniqueClients = DB::table('client_attendances')
                 ->whereBetween('date', [$startDate, $endDate])
-                ->selectRaw('client_attendances.clients_id, CONCAT(HOUR(date), ":", LPAD(FLOOR(MINUTE(date) / 30) * 30, 2, "0")) as time,
-                         SUM(CASE WHEN clients.gender = "male" THEN 1 ELSE 0 END) as male_count,
-                         SUM(CASE WHEN clients.gender = "female" THEN 1 ELSE 0 END) as female_count,
-                         COUNT(*) as client_count')
                 ->join('clients', 'client_attendances.clients_id', '=', 'clients.id')
-                ->groupBy('client_attendances.clients_id', 'time')
-                ->orderByRaw('TIME(time)')
-                ->get()->unique('clients_id')->values();
+                ->selectRaw('clients_id, clients.gender, MIN(CONCAT(HOUR(date), ":", LPAD(FLOOR(MINUTE(date) / 30) * 30, 2, "0"))) as first_time')
+                ->groupBy('clients_id', 'clients.gender')
+                ->get();
+
+            $attendanceByTime = $uniqueClients->groupBy('first_time')->map(function ($group) {
+                return [
+                    'time' => $group->first()->first_time,
+                    'male_count' => $group->where('gender', 'male')->count(),
+                    'female_count' => $group->where('gender', 'female')->count(),
+                    'client_count' => $group->count(),
+                ];
+            })->values();
+            
         }
         else {
             $clientQuery = $query->whereDate('date', $day);
-            $attendanceByTime = DB::table('client_attendances')
+
+            $uniqueClients = DB::table('client_attendances')
                 ->whereDate('date', $day)
-                ->selectRaw('client_attendances.clients_id, CONCAT(HOUR(date), ":", LPAD(FLOOR(MINUTE(date) / 30) * 30, 2, "0")) as time,
-                         SUM(CASE WHEN clients.gender = "male" THEN 1 ELSE 0 END) as male_count,
-                         SUM(CASE WHEN clients.gender = "female" THEN 1 ELSE 0 END) as female_count, COUNT(*) as client_count')
                 ->join('clients', 'client_attendances.clients_id', '=', 'clients.id')
-                ->groupBy('client_attendances.clients_id', 'time')
-                ->orderByRaw('TIME(time)')
-                ->get()->unique('clients_id')->values();
+                ->selectRaw('clients_id, clients.gender, MIN(CONCAT(HOUR(date), ":", LPAD(FLOOR(MINUTE(date) / 30) * 30, 2, "0"))) as first_time')
+                ->groupBy('clients_id', 'clients.gender')
+                ->get();
+
+            $attendanceByTime = $uniqueClients->groupBy('first_time')->map(function ($group) {
+                return [
+                    'time' => $group->first()->first_time,
+                    'male_count' => $group->where('gender', 'male')->count(),
+                    'female_count' => $group->where('gender', 'female')->count(),
+                    'client_count' => $group->count(),
+                ];
+            })->values();
         }
 
-        $regularClients = $clientQuery->clone()->where('status', 'regular')->distinct('clients_id')->count();
-        $newClients = $clientQuery->clone()->where('status', 'new')->distinct('clients_id')->count();
+        $regularClients = $clientQuery->clone()->distinct('clients_id')->where('status', 'regular')->count();
+        $newClients = $clientQuery->clone()->distinct('clients_id')->where('status', 'new')->count();
 
-        // Подсчитываем количество мужчин и женщин
         $male = $clientQuery->clone()->whereHas('clients', function ($query) {
             $query->where('gender', 'male');
         });
-        //$maleCount = $male->count();
         
         $female = $clientQuery->clone()->whereHas('clients', function ($query) {
             $query->where('gender', 'female');
@@ -83,7 +99,6 @@ class AttendanceStatisticController extends Controller
 
         $clients = $clientQuery->with('clients')->get();
 
-        //группировка клиентов по возрастам
         $ageRanges = [
             '1-5' => [1, 5],
             '6-10' => [6, 10],
@@ -130,11 +145,10 @@ class AttendanceStatisticController extends Controller
 
         $totalCount = $clients->unique('clients_id')->count();
 
-        // Рассчитываем процентное соотношение
+
         $malePercentage = $totalCount > 0 ? ($male->count() / $totalCount) * 100 : 0;
         $femalePercentage = $totalCount > 0 ? ($female->count() / $totalCount) * 100 : 0;
-        // $clientsWithStatuses = ClientAttendance::select('clients_id', 'status')->whereDate('date', $day)->distinct()->get();
-        // return $clientsWithStatuses;
+
         return [
             'total_clients' => $totalCount,
             'regular_clients' => $regularClients,
