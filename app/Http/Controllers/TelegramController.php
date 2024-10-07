@@ -12,34 +12,40 @@ class TelegramController extends Controller
     public function handle(Request $request)
     {
         $input = $request->all();
-        $message = $input['message'];
-        $chat_id = $message['chat']['id'];
-        $text = $message['text'];
+
+        $message = $input['message'] ?? null;
 
         $today = Carbon::today();
-        $getUniqueAttendances = Attendance::whereDate('day', $today)
+        
+
+        if ($message) {
+            $getUniqueAttendances = Attendance::whereDate('day', $today)
             ->where('type', 'in')
             ->distinct('user_id')
             ->get();
+            $data = $this->formattedData($getUniqueAttendances);
 
-        $data = $this->formattedData($getUniqueAttendances);
-        //return $data;
-        if ($text == '/start') {
-            $this->call('sendMessage', [
+            $chat_id = config('services.telegram.chat_id');
+            $text = $message['text'];
+
+            if ($text === '/start') {
+                $this->call('sendMessage', [
                 'chat_id' => $chat_id,
                 'text' => "Asssalomu alaykum"
             ]);
-        }elseif ($text == '/attendances'){
+                
+            }elseif ($text == '/attendances'){
             $this->call('sendMessage', [
                 'chat_id' => $chat_id,
                 'text' => $data,
                 'parse_mode' => 'Markdown'
             ]);
-        }else {
+            }else {
             $this->call('sendMessage', [
                 'chat_id' => $chat_id,
                 'text' => "Unknown command"
             ]);
+            }
         }
     }
 
