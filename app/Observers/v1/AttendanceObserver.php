@@ -19,6 +19,7 @@ class AttendanceObserver
         $this->today = request('day') ?? Carbon::today()->parse('Y-m-d');
         $this->time = request('time');
     }
+    
     public function creating(Attendance $attendance)
     {
         $attendance->day = $this->today;
@@ -26,14 +27,16 @@ class AttendanceObserver
         $attendance->branch_id = $attendance->device->branch_id;
         $attendance->created_at = $this->today . ' ' . $this->time;
     }
+
     public function created(Attendance $attendance)
     {
         $this->updateAttendanceTypes($attendance);
 
-        if ($attendance->type === 'in') {
+        if ($attendance->type === 'in' && $this->isFirstAttendanceOfDay($attendance)) {
             $this->sendAttendanceNotification($attendance);
         }
     }
+
     protected function updateAttendanceTypes(Attendance $attendance)
     {
         $user_id = $attendance->user_id;
@@ -110,6 +113,16 @@ class AttendanceObserver
         }
     }
 
+    protected function isFirstAttendanceOfDay(Attendance $attendance)
+    {
+        $existingAttendance = Attendance::where('user_id', $attendance->user_id)
+            ->where('type', 'in')
+            ->whereDate('day', $this->today)
+            ->exists();
+
+        return !$existingAttendance;
+    }
+
     protected function sendAttendanceNotification(Attendance $attendance)
     {
         $user = $attendance->user;
@@ -119,7 +132,6 @@ class AttendanceObserver
         $message .= "*Время:* {$attendance->time}\n";
         $message .= "*Тип:* {$attendance->type}\n"; 
         $message .= "*Device ID:* {$attendance->device_id}\n";
-        //$message .= "------------------------\n";
 
         $this->sendTelegramMessage($message);
     }
