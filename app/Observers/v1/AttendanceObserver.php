@@ -7,6 +7,7 @@ use App\Models\v1\Work_Days;
 use App\Models\v1\User;
 use Carbon\Carbon;
 use GuzzleHttp\Psr7\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class AttendanceObserver
@@ -28,6 +29,10 @@ class AttendanceObserver
     public function created(Attendance $attendance)
     {
         $this->updateAttendanceTypes($attendance);
+
+        if ($attendance->type === 'in') {
+            $this->sendAttendanceNotification($attendance);
+        }
     }
     protected function updateAttendanceTypes(Attendance $attendance)
     {
@@ -103,5 +108,32 @@ class AttendanceObserver
         } else {
             $workDay->update(['type' => 'none']);
         }
+    }
+
+    protected function sendAttendanceNotification(Attendance $attendance)
+    {
+        $user = $attendance->user;
+        $message = "*Добавлено новое посещение:*\n";
+        $message .= "*Имя сотрудника:* {$user->name}\n";
+        $message .= "*Дата:* {$attendance->day}\n";
+        $message .= "*Время:* {$attendance->time}\n";
+        $message .= "*Тип:* {$attendance->type}\n"; 
+        $message .= "*Device ID:* {$attendance->device_id}\n";
+        //$message .= "------------------------\n";
+
+        $this->sendTelegramMessage($message);
+    }
+
+    protected function sendTelegramMessage($message)
+    {
+        $telegramApiUrl = "https://api.telegram.org/bot" . config('services.telegram.api_key') . "/sendMessage";
+
+        $params = [
+            'chat_id' => config('services.telegram.chat_id'),
+            'text' => $message,
+            'parse_mode' => 'Markdown',
+        ];
+
+        Http::post($telegramApiUrl, $params);
     }
 }
