@@ -32,7 +32,9 @@ class AttendanceObserver
     {
         $this->updateAttendanceTypes($attendance);
 
-        if ($attendance->type === 'in' && $this->isFirstAttendanceOfDay($attendance)) {
+        if ($this->isFirstAttendanceOfDay($attendance) == true) {
+            \Log::info('Attendance type: ' . $attendance->type);
+            \Log::info('Checking if first attendance of the day: ' . true);
             $this->sendAttendanceNotification($attendance);
         }
     }
@@ -113,14 +115,17 @@ class AttendanceObserver
         }
     }
 
-    protected function isFirstAttendanceOfDay(Attendance $attendance)
+    protected function isFirstAttendanceOfDay(Attendance $attendance): bool
     {
         $existingAttendance = Attendance::where('user_id', $attendance->user_id)
             ->where('type', 'in')
             ->whereDate('day', $this->today)
             ->exists();
 
-        return !$existingAttendance;
+            if (!$existingAttendance) {
+                return true;
+            }
+            return false;
     }
 
     protected function sendAttendanceNotification(Attendance $attendance)
