@@ -16,7 +16,7 @@ class AttendanceObserver
     private $time;
     public function __construct()
     {
-        $this->today = request('day') ?? Carbon::today()->parse('Y-m-d');
+        $this->today = request('day') ?? Carbon::today()->format('Y-m-d');
         $this->time = request('time');
     }
     

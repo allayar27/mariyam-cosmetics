@@ -12,41 +12,36 @@ class TelegramController extends Controller
     public function handle(Request $request)
     {
         $input = $request->all();
-
-        $message = $input['message'] ?? null;
+        $message = $input['message'];
+        $chat_id = config('services.telegram.chat_id');
+        $text = $message['text'];
 
         $today = Carbon::today();
-        
 
-        if ($message) {
-            $getUniqueAttendances = Attendance::whereDate('day', $today)
-            ->where('type', 'in')
-            ->distinct('user_id')
-            ->get();
-            $data = $this->formattedData($getUniqueAttendances);
+        $getUniqueAttendances = Attendance::whereDate('day', $today)
+        ->where('type', 'in')
+        ->get();
 
-            $chat_id = config('services.telegram.chat_id');
-            $text = $message['text'];
+        $data = $this->formattedData($getUniqueAttendances);
 
-            if ($text === '/start') {
-                $this->call('sendMessage', [
+        if ($text === '/start') {
+            $this->call('sendMessage', [
                 'chat_id' => $chat_id,
                 'text' => "Asssalomu alaykum"
-            ]);
-                
-            }elseif ($text == '/attendances'){
+            ]);    
+        }elseif ($text == '/attendances'){
             $this->call('sendMessage', [
                 'chat_id' => $chat_id,
                 'text' => $data,
                 'parse_mode' => 'Markdown'
             ]);
-            }else {
+        }else {
             $this->call('sendMessage', [
                 'chat_id' => $chat_id,
                 'text' => "Unknown command"
             ]);
-            }
         }
+        
     }
 
     private function formattedData($attendances)
@@ -71,20 +66,20 @@ class TelegramController extends Controller
         return $response->json();
     }
 
-    public function setWebhook()
-    {
-        $url = "https://maryiam-cosmetics.faceai.uz/telegram/webhook";
+    // public function setWebhook()
+    // {
+    //     $url = "https://maryiam-cosmetics.faceai.uz/telegram/webhook";
 
-        $telegram_api_url = "https://api.telegram.org/bot" . config('services.telegram.api_key') . "/setWebhook";
+    //     $telegram_api_url = "https://api.telegram.org/bot" . config('services.telegram.api_key') . "/setWebhook";
 
-        $response = Http::post($telegram_api_url, [
-            'url' => $url,
-        ]);
+    //     $response = Http::post($telegram_api_url, [
+    //         'url' => $url,
+    //     ]);
 
-        if ($response->successful()) {
-            return "Webhook установлен!";
-        } else {
-            return "Ошибка при установке webhook: " . $response->body();
-        }
-    }
+    //     if ($response->successful()) {
+    //         return "Webhook установлен!";
+    //     } else {
+    //         return "Ошибка при установке webhook: " . $response->body();
+    //     }
+    // }
 }
