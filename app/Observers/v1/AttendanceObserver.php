@@ -32,11 +32,11 @@ class AttendanceObserver
     {
         $this->updateAttendanceTypes($attendance);
 
-        if ($this->isFirstAttendanceOfDay($attendance) == true) {
-            \Log::info('Attendance type: ' . $attendance->type);
-            \Log::info('Checking if first attendance of the day: ' . true);
-            $this->sendAttendanceNotification($attendance);
-        }
+        // if ($this->isFirstAttendanceOfDay($attendance) == true) {
+        //     \Log::info('Attendance type: ' . $attendance->type);
+        //     \Log::info('Checking if first attendance of the day: ' . true);
+        //     $this->sendAttendanceNotification($attendance);
+        // }
     }
 
     protected function updateAttendanceTypes(Attendance $attendance)
@@ -113,44 +113,5 @@ class AttendanceObserver
         } else {
             $workDay->update(['type' => 'none']);
         }
-    }
-
-    protected function isFirstAttendanceOfDay(Attendance $attendance): bool
-    {
-        $existingAttendance = Attendance::where('user_id', $attendance->user_id)
-            ->where('type', 'in')
-            ->whereDate('day', $this->today)
-            ->exists();
-
-            if (!$existingAttendance) {
-                return true;
-            }
-            return false;
-    }
-
-    protected function sendAttendanceNotification(Attendance $attendance)
-    {
-        $user = $attendance->user;
-        $message = "*Добавлено новое посещение:*\n";
-        $message .= "*Имя сотрудника:* {$user->name}\n";
-        $message .= "*Дата:* {$attendance->day}\n";
-        $message .= "*Время:* {$attendance->time}\n";
-        $message .= "*Тип:* {$attendance->type}\n"; 
-        $message .= "*Device ID:* {$attendance->device_id}\n";
-
-        $this->sendTelegramMessage($message);
-    }
-
-    protected function sendTelegramMessage($message)
-    {
-        $telegramApiUrl = "https://api.telegram.org/bot" . config('services.telegram.api_key') . "/sendMessage";
-
-        $params = [
-            'chat_id' => config('services.telegram.chat_id'),
-            'text' => $message,
-            'parse_mode' => 'Markdown',
-        ];
-
-        Http::post($telegramApiUrl, $params);
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\v1\Attendance\AttendanceAddRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class AttendanceController extends Controller
 {
@@ -45,6 +46,11 @@ class AttendanceController extends Controller
                 ]);
             }
             DB::commit();
+            if ($this->isFirstAttendanceOfDay($attendance)) {
+                \Log::info('This is the first attendance of the day');
+                $this->sendAttendanceNotification($attendance);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Attendance recorded successfully',
@@ -59,5 +65,47 @@ class AttendanceController extends Controller
                 'body'
             ], 500);
         }
+    }
+
+    protected function isFirstAttendanceOfDay(Attendance $attendance): bool
+    {
+        \Log::info('Checking first attendance of the day for user_id: ' . $attendance->user_id);
+
+        $today = Carbon::today();
+
+        \Log::info('Today: ' . $today);
+        $existingAttendance = Attendance::where('user_id', $attendance->user_id)
+            ->where('type', 'in')
+            ->whereDate('day', $today)
+            ->exists();
+        \Log::info('Existing attendance found: ' . ($existingAttendance ? 'Yes' : 'No'));
+
+        return !$existingAttendance;
+    }
+
+    protected function sendAttendanceNotification(Attendance $attendance)
+    {
+        $user = $attendance->user;
+        $message = "*Добавлено новое посещение:*\n";
+        $message .= "*Имя сотрудника:* {$user->name}\n";
+        $message .= "*Дата:* {$attendance->day}\n";
+        $message .= "*Время:* {$attendance->time}\n";
+        $message .= "*Тип:* {$attendance->type}\n";
+        $message .= "*Device ID:* {$attendance->device_id}\n";
+
+        $this->sendTelegramMessage($message);
+    }
+
+    protected function sendTelegramMessage($message)
+    {
+        $telegramApiUrl = "https://api.telegram.org/bot" . config('services.telegram.api_key') . "/sendMessage";
+
+        $params = [
+            'chat_id' => config('services.telegram.chat_id'),
+            'text' => $message,
+            'parse_mode' => 'Markdown',
+        ];
+
+        Http::post($telegramApiUrl, $params);
     }
 }
