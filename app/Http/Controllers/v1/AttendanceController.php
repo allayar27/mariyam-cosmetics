@@ -33,6 +33,12 @@ class AttendanceController extends Controller
             $validated = $request->validated();
             // $time = Carbon::createFromFormat('H:i:s', $validated['time'])->format('H:i:s');
             $time = $validated['time'];
+            $today = Carbon::today();
+            $existingAttendance = Attendance::where('user_id', $request->user_id)
+                ->where('type', 'in')
+                ->whereDate('day', $today)
+                ->exists();
+
             $attendance = Attendance::create([
                 'user_id' => $user->id,
                 'device_id' => $validated['device_id'],
@@ -45,9 +51,12 @@ class AttendanceController extends Controller
                     'path' => 'users/' . $user->id . '/attendances/'
                 ]);
             }
+
             DB::commit();
-            if ($this->isFirstAttendanceOfDay($attendance)) {
+            if (!$existingAttendance) {
                 \Log::info('This is the first attendance of the day');
+                \Log::info('Existing attendance found: ' . ($existingAttendance ? 'Yes' : 'No'));
+
                 $this->sendAttendanceNotification($attendance);
             }
 
@@ -65,22 +74,6 @@ class AttendanceController extends Controller
                 'body'
             ], 500);
         }
-    }
-
-    protected function isFirstAttendanceOfDay(Attendance $attendance): bool
-    {
-        \Log::info('Checking first attendance of the day for user_id: ' . $attendance->user_id);
-
-        $today = Carbon::today();
-
-        \Log::info('Today: ' . $today);
-        $existingAttendance = Attendance::where('user_id', $attendance->user_id)
-            ->where('type', 'in')
-            ->whereDate('day', $today)
-            ->exists();
-        \Log::info('Existing attendance found: ' . ($existingAttendance ? 'Yes' : 'No'));
-
-        return !$existingAttendance;
     }
 
     protected function sendAttendanceNotification(Attendance $attendance)
