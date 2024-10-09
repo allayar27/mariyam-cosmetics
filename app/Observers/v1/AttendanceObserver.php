@@ -31,12 +31,6 @@ class AttendanceObserver
     public function created(Attendance $attendance)
     {
         $this->updateAttendanceTypes($attendance);
-
-        // if ($this->isFirstAttendanceOfDay($attendance) == true) {
-        //     \Log::info('Attendance type: ' . $attendance->type);
-        //     \Log::info('Checking if first attendance of the day: ' . true);
-        //     $this->sendAttendanceNotification($attendance);
-        // }
     }
 
     protected function updateAttendanceTypes(Attendance $attendance)
