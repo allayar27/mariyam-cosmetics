@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\v1\Attendance;
+
 use Carbon\Carbon;
-use DefStudio\Telegraph\Facades\Telegraph;
-use DefStudio\Telegraph\Keyboard\Button;
-use DefStudio\Telegraph\Keyboard\Keyboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -14,11 +11,7 @@ class TelegramController extends Controller
 {
     public function handle(Request $request)
     {
-        Telegraph::message('hello world')
-            ->keyboard(Keyboard::make()->buttons([
-                Button::make('Delete')->action('delete')->param('id', '42'),
-                Button::make('open')->url('https://test.it'),
-            ]))->send();
+        
     }
 
     protected function sendTelegramMessage($chat_id, $message)

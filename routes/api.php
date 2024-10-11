@@ -68,8 +68,8 @@ Route::middleware('auth:sanctum')->group(function () {
     //clients
     Route::post('client/attendance/add', [ClientAttendanceController::class, 'add']);
     Route::get('/client/attendance/by_date', [AttendanceStatisticController::class, 'getClientsByDate']);
-    Route::post('/telegram/webhook', [TelegramController::class, 'handle']);
-    Route::get('/set-webhook', [TelegramController::class, 'setWebhook']);
+    // Route::post('/telegram/webhook', [TelegramController::class, 'handle']);
+    // Route::get('/set-webhook', [TelegramController::class, 'setWebhook']);
 
 });
 // Route::get('user/infor/{id}',[UserAttendanceController::class,'about']);//6
