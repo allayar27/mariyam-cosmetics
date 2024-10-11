@@ -76,6 +76,7 @@ class AttendanceController extends Controller
         }
     }
 
+
     protected function sendAttendanceNotification(Attendance $attendance)
     {
         $user = $attendance->user;

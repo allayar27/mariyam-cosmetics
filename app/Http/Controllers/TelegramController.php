@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\v1\Attendance;
 use Carbon\Carbon;
+use DefStudio\Telegraph\Facades\Telegraph;
+use DefStudio\Telegraph\Keyboard\Button;
+use DefStudio\Telegraph\Keyboard\Keyboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -11,37 +14,30 @@ class TelegramController extends Controller
 {
     public function handle(Request $request)
     {
-        $input = $request->all();
-        $message = $input['message'];
-        $chat_id = config('services.telegram.chat_id');
-        $text = $message['text'];
+        Telegraph::message('hello world')
+            ->keyboard(Keyboard::make()->buttons([
+                Button::make('Delete')->action('delete')->param('id', '42'),
+                Button::make('open')->url('https://test.it'),
+            ]))->send();
+    }
 
-        $today = Carbon::today();
+    protected function sendTelegramMessage($chat_id, $message)
+    {
+        $telegramApiUrl = "https://api.telegram.org/bot" . config('services.telegram.api_key') . "/sendMessage";
 
-        $getUniqueAttendances = Attendance::whereDate('day', $today)
-        ->where('type', 'in')
-        ->get();
+        $params = [
+            'chat_id' => $chat_id,
+            'text' => $message,
+        ];
 
-        $data = $this->formattedData($getUniqueAttendances);
+        $response = Http::post($telegramApiUrl, $params);
+        \Log::info("Response from Telegram: " . $response->body());
 
-        if ($text === '/start') {
-            $this->call('sendMessage', [
-                'chat_id' => $chat_id,
-                'text' => "Asssalomu alaykum"
-            ]);    
-        }elseif ($text == '/attendances'){
-            $this->call('sendMessage', [
-                'chat_id' => $chat_id,
-                'text' => $data,
-                'parse_mode' => 'Markdown'
-            ]);
-        }else {
-            $this->call('sendMessage', [
-                'chat_id' => $chat_id,
-                'text' => "Unknown command"
-            ]);
+        if ($response->successful()) {
+            return 'Xabar yuborildi!';
+        } else {
+            return 'Xato yuz berdi: ' . $response->body();
         }
-        
     }
 
     private function formattedData($attendances)
@@ -49,12 +45,12 @@ class TelegramController extends Controller
         $data = "*Attendance Data:*\n";
 
         foreach ($attendances as $attendance) {
-        $data .= "\n*Employee Name:* {$attendance->user->name}\n";
-        $data .= "*Date:* " . Carbon::parse($attendance->day)->format('Y-m-d') . "\n";
-        $data .= "*Time:* " . Carbon::parse($attendance->time)->format('H:i:s') . "\n";
-        $data .= "*Device ID:* {$attendance->device_id}\n";
-        $data .= "*Type:* {$attendance->type}\n";
-        $data .= "------------------------\n";
+            $data .= "\n*Employee Name:* {$attendance->user->name}\n";
+            $data .= "*Date:* " . Carbon::parse($attendance->day)->format('Y-m-d') . "\n";
+            $data .= "*Time:* " . Carbon::parse($attendance->time)->format('H:i:s') . "\n";
+            $data .= "*Device ID:* {$attendance->device_id}\n";
+            $data .= "*Type:* {$attendance->type}\n";
+            $data .= "------------------------\n";
         }
         return $data;
     }
@@ -66,20 +62,20 @@ class TelegramController extends Controller
         return $response->json();
     }
 
-    // public function setWebhook()
-    // {
-    //     $url = "https://maryiam-cosmetics.faceai.uz/telegram/webhook";
+    public function setWebhook()
+    {
+        $url = "https://299e-89-236-210-100.ngrok-free.app/telegram/webhook";
 
-    //     $telegram_api_url = "https://api.telegram.org/bot" . config('services.telegram.api_key') . "/setWebhook";
+        $telegram_api_url = "https://api.telegram.org/bot" . config('services.telegram.api_key') . "/setWebhook";
 
-    //     $response = Http::post($telegram_api_url, [
-    //         'url' => $url,
-    //     ]);
+        $response = Http::post($telegram_api_url, [
+            'url' => $url,
+        ]);
 
-    //     if ($response->successful()) {
-    //         return "Webhook установлен!";
-    //     } else {
-    //         return "Ошибка при установке webhook: " . $response->body();
-    //     }
-    // }
+        if ($response->successful()) {
+            return "Webhook установлен!";
+        } else {
+            return "Ошибка при установке webhook: " . $response->body();
+        }
+    }
 }

@@ -22,7 +22,7 @@ use App\Http\Resources\v1\User\UsersAttendanceResource;
 
 class UserAttendanceController extends Controller
 {
-
+ 
     //for all statistika  //2
     public function all(Request $request)
     {
@@ -158,11 +158,17 @@ class UserAttendanceController extends Controller
                 $lateTime = Carbon::parse($in->time)->diff(Carbon::parse($user->schedule->time_in($date)));
                 $attendanceData['late'] = $lateTime->format('%H:%I');
             }
-
+            if ($in && $in->time < $user->schedule->time_in($date)) {
+                $attendanceData['late'] = null;
+            }
             if ($out && $out->time < $user->schedule->time_out($date)) {
                 $lateTime = Carbon::parse($out->time)->diff(Carbon::parse($user->schedule->time_out($date)));
                 $attendanceData['early'] = $lateTime->format('%H:%I');
             }
+            if ($out && $out->time > $user->schedule->time_out($date)) {
+                $attendanceData['early'] = null;
+            }
+
             if ($in or $out) {
                 $data[] = [
                     'day' => $date,
